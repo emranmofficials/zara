@@ -146,13 +146,13 @@ def main_tests():
     check("tool catalogue has 12 tools", len(run(main.list_tools(MASTER))["tools"]) == 12)
 
     time_result = run(main.execute_tool(main.ToolCallRequest(tool="get_time"), MASTER))
-    check("get_time returns a reply", "baja hai" in time_result.message)
+    check("get_time returns a reply", "বাজে" in time_result.message)
 
     unconfirmed = run(main.execute_tool(main.ToolCallRequest(tool="send_sms"), MASTER))
     confirmed = run(main.execute_tool(
         main.ToolCallRequest(tool="send_sms", args={"to": "123"}, confirmed=True), MASTER))
     check("send_sms needs confirmation", unconfirmed.needs_confirm is True)
-    check("confirmed send_sms executes", "(confirmed)" in confirmed.message and "123" in confirmed.message)
+    check("confirmed send_sms executes", "(নিশ্চিত)" in confirmed.message and "123" in confirmed.message)
 
     fuzzy = run(main.execute_tool(main.ToolCallRequest(tool="get_tiem"), MASTER))
     check("fuzzy suggestion for typo", "get_time" in fuzzy.message)
@@ -181,7 +181,13 @@ def main_tests():
     check("revoked token rejected", expect_401(main.list_devices(device_token)))
 
     summary = run(main.summarize(MASTER))
-    check("empty-history summary falls back safely", "koi chat nahi" in summary["summary"].lower())
+    check("empty-history summary falls back safely", "সংক্ষেপ" in summary["summary"])
+
+    check(
+        "backend prompt is Bengali-only",
+        "বাংলা" in main.BENGALI_SYSTEM and "Hinglish" in main.BENGALI_SYSTEM,
+    )
+    check("model fallback chain is configured", len(main.GEMINI_MODELS) > 1)
 
     try:
         run(main.chat(main.ChatRequest(message="hi"), MASTER))

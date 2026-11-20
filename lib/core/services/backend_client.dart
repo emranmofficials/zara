@@ -262,7 +262,7 @@ class BackendClient {
       if (response.statusCode != 200) {
         return ToolResult(
           tool: call.name,
-          message: 'Backend error ${response.statusCode}',
+          message: 'Backend ত্রুটি ${response.statusCode} — কিছু পাঠানো হয়নি।',
         );
       }
       final data = jsonDecode(response.body) as Map<String, dynamic>;
@@ -272,7 +272,10 @@ class BackendClient {
         needsConfirm: data['needs_confirm'] as bool? ?? false,
       );
     } catch (e) {
-      return ToolResult(tool: call.name, message: 'Backend issue: $e');
+      return ToolResult(
+        tool: call.name,
+        message: 'Backend সংযোগে সমস্যা — কিছু পাঠানো হয়নি।',
+      );
     }
   }
 }

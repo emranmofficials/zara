@@ -118,7 +118,7 @@ class AppState extends ChangeNotifier {
   Future<bool> initializeVoice() async {
     final ok = await _voice.initialize();
     if (!ok) {
-      _voiceError = 'মাইক / স্পিচ রিকগনিশন পাওয়া যায়নি। Settings দেখুন।';
+      _voiceError = 'মাইক / স্পিচ রিকগনিশন পাওয়া যায়নি। সেটিংস দেখুন।';
       notifyListeners();
     }
     return ok;
@@ -381,7 +381,7 @@ class AppState extends ChangeNotifier {
     notifyListeners();
     final summary = await BackendClient.instance.fetchSummary();
     if (summary == null) {
-      _lastAction = 'সারাংশ পাওয়া যায়নি — backend সেট করা আছে কি?';
+      _lastAction = 'সারাংশ পাওয়া যায়নি — ব্যাকএন্ড সেট করা আছে কি?';
       _voiceStatus = VoiceStatus.idle;
       notifyListeners();
       return;

@@ -34,9 +34,27 @@ app.add_middleware(
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 MASTER_TOKEN = os.getenv("ZARA_TOKEN", "")
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
-GEMINI_URL = (
-    "https://generativelanguage.googleapis.com/"
-    f"v1beta/models/{GEMINI_MODEL}:generateContent"
+# Clean-room fallback chain: quota/outage on one public model rolls to the next.
+GEMINI_MODELS = [GEMINI_MODEL] + [
+    model
+    for model in (
+        "gemini-2.5-flash-lite",
+        "gemini-2.0-flash-lite",
+        "gemini-flash-latest",
+    )
+    if model != GEMINI_MODEL
+]
+
+# Mirrors lib/core/services/language_policy.dart in the Flutter client. The
+# backend must never answer in Hinglish even when the caller asks for it.
+BENGALI_SYSTEM = (
+    "তুমি ZaRa, একজন সংক্ষিপ্ত বাংলা-ভাষী ভয়েস অ্যাসিস্ট্যান্ট। "
+    "সবসময় শুদ্ধ বাংলা ভাষায় উত্তর দাও। ইংরেজি বা Hinglish ব্যবহার করো না। "
+    "উত্তর ছোট, প্রাকৃতিক এবং কথ্য বাংলা রাখো। প্রয়োজনে টুল ব্যবহার করো।"
+)
+BENGALI_TOOL_PROMPT = (
+    'কোনো টুল লাগলে শুধু JSON দাও: {"tool":"name","args":{...}} — '
+    "নাহলে সরাসরি বাংলা উত্তর দাও।"
 )
 
 # ---------- Persistent JSON store ----------
@@ -89,18 +107,18 @@ def _check_auth(authorization: str | None) -> None:
 
 # ---------- Tools (mirror of kTools) ----------
 TOOLS: dict[str, dict[str, Any]] = {
-    "get_time": {"description": "current time", "tier": 0, "confirm": False},
-    "search_web": {"description": "search the web", "tier": 0, "confirm": False},
-    "find_tool": {"description": "suggest a tool by name", "tier": 0, "confirm": False},
-    "remember_fact": {"description": "store a memory", "tier": 0, "confirm": False},
-    "recall_memory": {"description": "recall a memory", "tier": 0, "confirm": False},
-    "chat_text": {"description": "send a chat message", "tier": 1, "confirm": False},
-    "reply_to_chat": {"description": "reply to last chat", "tier": 1, "confirm": True},
-    "send_sms": {"description": "send an SMS", "tier": 1, "confirm": True},
-    "make_call": {"description": "place a call", "tier": 1, "confirm": True},
-    "send_email": {"description": "send an email", "tier": 2, "confirm": True},
-    "set_alarm": {"description": "set an alarm", "tier": 1, "confirm": False},
-    "play_music": {"description": "play music", "tier": 1, "confirm": False},
+    "get_time": {"description": "বর্তমান সময় বলো", "tier": 0, "confirm": False},
+    "search_web": {"description": "ইন্টারনেটে তথ্য খুঁজো", "tier": 0, "confirm": False},
+    "find_tool": {"description": "নাম দিয়ে টুল খুঁজো", "tier": 0, "confirm": False},
+    "remember_fact": {"description": "তথ্য মনে রাখো", "tier": 0, "confirm": False},
+    "recall_memory": {"description": "মনে রাখা তথ্য বের করো", "tier": 0, "confirm": False},
+    "chat_text": {"description": "চ্যাটে বার্তা লেখো", "tier": 1, "confirm": False},
+    "reply_to_chat": {"description": "সর্বশেষ চ্যাটে উত্তর দাও", "tier": 1, "confirm": True},
+    "send_sms": {"description": "এসএমএস পাঠাও", "tier": 1, "confirm": True},
+    "make_call": {"description": "ফোন কল করো", "tier": 1, "confirm": True},
+    "send_email": {"description": "ইমেইল পাঠাও", "tier": 2, "confirm": True},
+    "set_alarm": {"description": "অ্যালার্ম সেট করো", "tier": 1, "confirm": False},
+    "play_music": {"description": "সঙ্গীত বাজাও", "tier": 1, "confirm": False},
 }
 
 
@@ -221,12 +239,12 @@ async def execute_tool(
         prefix = sorted(TOOLS, key=lambda n: _distance(payload.tool, n))[:3]
         return ToolResult(
             tool=payload.tool,
-            message=f"Unknown tool: {payload.tool}. Shayad: {', '.join(prefix)}",
+            message=f"অজানা টুল: {payload.tool}। হয়তো: {', '.join(prefix)}",
         )
     if meta["confirm"] and not payload.confirmed:
         return ToolResult(
             tool=payload.tool,
-            message=f"Confirm karein: {meta['description']}?",
+            message=f"নিশ্চিত করুন: {meta['description']}?",
             needs_confirm=True,
         )
     return ToolResult(tool=payload.tool, message=_run_tool(payload.tool, payload.args))
@@ -234,39 +252,39 @@ async def execute_tool(
 
 def _run_tool(name: str, args: dict[str, Any]) -> str:
     if name == "get_time":
-        return f"Abhi {datetime.now():%H:%M} baja hai."
+        return f"এখন {datetime.now():%H:%M} বাজে।"
     if name == "find_tool":
         query = str(args.get("query", "")).lower()
         hits = [n for n in TOOLS if query and query in n]
-        return "Tools: " + ", ".join(hits[:5]) if hits else "Koi tool nahi mila."
+        return "টুল: " + ", ".join(hits[:5]) if hits else "কোনো টুল পাওয়া যায়নি।"
     if name == "remember_fact":
         fact = args.get("fact")
         if not fact:
-            return "Kya yaad rakhoon?"
+            return "কী মনে রাখব?"
         with _store_lock:
             store = _load_store()
             store["facts"].append({"text": str(fact), "at": _now_iso()})
             _save_store(store)
-        return f"Yaad rakh lunga: {fact}"
+        return f"মনে রাখব: {fact}"
     if name == "recall_memory":
         query = str(args.get("query", "")).lower()
         with _store_lock:
             facts = _load_store()["facts"]
         if not facts:
-            return "Abhi kuch yaad nahi hai."
+            return "এখন কিছু মনে নেই।"
         if query:
             facts = [f for f in facts if query in f["text"].lower()]
         if not facts:
-            return "Kuch nahi mila."
-        return "Yaad hai: " + " | ".join(f["text"] for f in facts[-5:])
+            return "কিছু পাওয়া যায়নি।"
+        return "মনে আছে: " + " | ".join(f["text"] for f in facts[-5:])
     if name == "play_music":
-        return f"Baja raha hoon: {args.get('query', 'music')}"
+        return f"বাজাচ্ছি: {args.get('query', 'সঙ্গীত')}"
     if name == "set_alarm":
-        return f"Alarm set for {args.get('time', '?')}."
+        return f"{args.get('time', '?')}-এ অ্যালার্ম সেট করা হয়েছে।"
     if name in {"chat_text", "reply_to_chat", "send_sms", "send_email", "make_call"}:
-        target = args.get("to") or args.get("chat") or "unknown"
-        return f"{name} → {target} (confirmed)"
-    return f"Tool {name} abhi available nahi hai."
+        target = args.get("to") or args.get("chat") or "অজানা"
+        return f"{name} → {target} (নিশ্চিত)"
+    return f"টুল {name} এখন পাওয়া যাচ্ছে না।"
 
 
 def _distance(a: str, b: str) -> int:
@@ -286,18 +304,26 @@ async def _gemini(system: str, user_text: str) -> str:
         "contents": [{"role": "user", "parts": [{"text": f"{system}\n\n{user_text}"}]}],
         "generationConfig": {"temperature": 0.4, "maxOutputTokens": 1024},
     }
+    last_error = ""
     async with httpx.AsyncClient(timeout=25.0) as client:
-        response = await client.post(GEMINI_URL, params={"key": GEMINI_API_KEY}, json=body)
-    if response.status_code != 200:
-        raise HTTPException(
-            status_code=502,
-            detail=f"Gemini error {response.status_code}: {response.text[:200]}",
-        )
-    data = response.json()
-    try:
-        return data["candidates"][0]["content"]["parts"][0]["text"]
-    except (KeyError, IndexError, TypeError):
-        return "Kuch jawab nahi mila."
+        for model in GEMINI_MODELS:
+            url = (
+                "https://generativelanguage.googleapis.com/"
+                f"v1beta/models/{model}:generateContent"
+            )
+            response = await client.post(
+                url, params={"key": GEMINI_API_KEY}, json=body
+            )
+            if response.status_code == 200:
+                data = response.json()
+                try:
+                    return data["candidates"][0]["content"]["parts"][0]["text"]
+                except (KeyError, IndexError, TypeError):
+                    return "কোনো উত্তর পাওয়া যায়নি।"
+            last_error = f"Gemini error {response.status_code}: {response.text[:120]}"
+            if response.status_code not in (429, 500, 502, 503, 504):
+                break
+    raise HTTPException(status_code=502, detail=last_error or "Gemini unavailable")
 
 
 @app.post("/chat", response_model=ChatResponse)
@@ -307,9 +333,8 @@ async def chat(
 ) -> ChatResponse:
     _check_auth(authorization)
     system = (
-        f"You are {payload.persona}, a concise voice assistant. "
-        "Reply in the same language as the user. Keep it short and natural. "
-        ' Agar tool chahiye to sirf JSON do: {"tool":"name","args":{...}}.'
+        f"{BENGALI_SYSTEM} বর্তমান persona: {payload.persona}। "
+        f"{BENGALI_TOOL_PROMPT}"
     )
     return ChatResponse(reply=await _gemini(system, payload.message))
 
@@ -411,14 +436,14 @@ async def summarize(authorization: str | None = Header(default=None)) -> dict:
     with _store_lock:
         history = _load_store()["history"]
     if not history:
-        return {"summary": "Abhi summarize karne ke liye koi chat nahi hai."}
+        return {"summary": "এখন সংক্ষেপ করার মতো কোনো চ্যাট নেই।"}
     transcript = "\n".join(
         f"{'User' if m.get('is_user') else 'ZaRa'}: {m.get('text', '')}"
         for m in history[-40:]
     )
     summary = await _gemini(
-        "Summarise this conversation in 3-5 short bullets in the user's language. "
-        "Only the summary, no preamble.",
+        "নিচের কথোপকথনটি ৩–৫টি ছোট বাংলা বুলেটে সংক্ষেপ করো। "
+        "শুধু সারাংশ দাও, কোনো ভূমিকা বা ব্যাখ্যা নয়।",
         transcript,
     )
     return {"summary": summary}

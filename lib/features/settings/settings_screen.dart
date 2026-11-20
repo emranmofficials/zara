@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 
@@ -7,7 +8,10 @@ import '../../core/keys/key_store.dart';
 import '../../core/navigation/routes.dart';
 import '../../core/notifications/reply_sender.dart';
 import '../../core/services/backend_client.dart';
+import '../../core/services/gemini_client.dart';
+import '../../core/services/gemini_key_guard.dart';
 import '../../core/services/language_policy.dart';
+import '../../core/services/model_catalog.dart';
 import '../../core/theme/persona.dart';
 import '../../state/app_state.dart';
 
@@ -405,13 +409,27 @@ class _KeyField extends StatefulWidget {
 class _KeyFieldState extends State<_KeyField> {
   final _controller = TextEditingController();
   bool _obscure = true;
+  bool _checking = false;
+  bool _saved = false;
   String _message = '';
+  String _hint = '';
+  String _model = '';
 
   @override
   void initState() {
     super.initState();
-    KeyStore.instance.read(KeyStoreKeys.gemini).then((v) {
-      if (v != null) _controller.text = v;
+    Future.wait([
+      KeyStore.instance.read(KeyStoreKeys.gemini),
+      KeyStore.instance.read(KeyStoreKeys.geminiModel),
+      GeminiClient.instance.savedKeyHint(),
+    ]).then((values) {
+      if (!mounted) return;
+      setState(() {
+        _controller.text = GeminiKeyGuard.sanitize(values[0] ?? '');
+        _model = values[1] ?? '';
+        _hint = values[2] ?? '';
+        _saved = _controller.text.isNotEmpty;
+      });
     });
   }
 
@@ -421,8 +439,76 @@ class _KeyFieldState extends State<_KeyField> {
     super.dispose();
   }
 
+  Future<void> _test() async {
+    var raw = _controller.text;
+    if (raw.trim().isEmpty) {
+      raw = await KeyStore.instance.read(KeyStoreKeys.gemini) ?? '';
+    }
+    setState(() => _checking = true);
+    final check = await GeminiClient.instance.testKey(raw);
+    if (!mounted) return;
+    setState(() {
+      _checking = false;
+      _message = check.message;
+    });
+  }
+
+  Future<void> _save() async {
+    final key = GeminiKeyGuard.sanitize(_controller.text);
+    if (key.isEmpty) {
+      setState(() => _message = _controller.text.trim().isEmpty
+          ? GeminiKeyCheck.missing().message
+          : GeminiKeyCheck.invalidFormat().message);
+      return;
+    }
+    setState(() => _checking = true);
+    final check = await GeminiClient.instance.testKey(key);
+    if (!mounted) return;
+    if (!check.ok) {
+      setState(() {
+        _checking = false;
+        _message = check.message;
+      });
+      return;
+    }
+
+    final hint = GeminiKeyGuard.hint(key);
+    await Future.wait([
+      KeyStore.instance.save(KeyStoreKeys.gemini, key),
+      KeyStore.instance.save(KeyStoreKeys.geminiKeyHint, hint),
+      KeyStore.instance.save(KeyStoreKeys.geminiModel, _model),
+    ]);
+    if (!mounted) return;
+    context.read<AppState>().setFlag(KeyStoreKeys.gemini, true);
+    setState(() {
+      _controller.text = key;
+      _hint = hint;
+      _saved = true;
+      _checking = false;
+      _message = 'KEY যাচাই হয়েছে — ${check.message}';
+    });
+  }
+
+  Future<void> _delete() async {
+    await Future.wait([
+      KeyStore.instance.remove(KeyStoreKeys.gemini),
+      KeyStore.instance.remove(KeyStoreKeys.geminiKeyHint),
+      KeyStore.instance.remove(KeyStoreKeys.geminiModel),
+    ]);
+    if (!mounted) return;
+    context.read<AppState>().setFlag(KeyStoreKeys.gemini, false);
+    setState(() {
+      _controller.clear();
+      _hint = '';
+      _saved = false;
+      _message = 'KEY মুছে ফেলা হয়েছে।';
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    final models = <String>['', ...ModelCatalog.textFallback];
+    if (_model.isNotEmpty && !models.contains(_model)) models.add(_model);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -432,25 +518,72 @@ class _KeyFieldState extends State<_KeyField> {
           decoration: InputDecoration(
             border: const OutlineInputBorder(),
             labelText: 'Gemini API key',
+            hintText: _hint.isEmpty ? 'AIza…' : 'সংরক্ষিত: $_hint',
             suffixIcon: IconButton(
               icon: Icon(_obscure ? Icons.visibility : Icons.visibility_off),
               onPressed: () => setState(() => _obscure = !_obscure),
             ),
           ),
         ),
-        const SizedBox(height: 8),
-        FilledButton(
-          onPressed: () async {
-            final appState = context.read<AppState>();
-            await KeyStore.instance.save(KeyStoreKeys.gemini, _controller.text);
-            if (!mounted) return;
-            appState.setFlag(
-                KeyStoreKeys.gemini, _controller.text.trim().isNotEmpty);
-            setState(() => _message = 'এই ডিভাইসে সংরক্ষিত।');
-          },
-          child: const Text('Save key'),
+        const SizedBox(height: 6),
+        Text(
+          'ফ্রি KEY: ${GeminiKeyGuard.aiStudioUrl}',
+          style: Theme.of(context).textTheme.bodySmall,
         ),
-        if (_message.isNotEmpty) Text(_message),
+        TextButton.icon(
+          onPressed: () async {
+            await Clipboard.setData(
+              const ClipboardData(text: GeminiKeyGuard.aiStudioUrl),
+            );
+            if (!mounted) return;
+            setState(() => _message = 'ফ্রি KEY-র লিঙ্ক কপি হয়েছে।');
+          },
+          icon: const Icon(Icons.copy, size: 16),
+          label: const Text('লিঙ্ক কপি করুন'),
+        ),
+        const SizedBox(height: 4),
+        DropdownButtonFormField<String>(
+          initialValue: models.contains(_model) ? _model : '',
+          decoration: const InputDecoration(
+            labelText: 'মডেল',
+            border: OutlineInputBorder(),
+          ),
+          items: [
+            for (final model in models)
+              DropdownMenuItem<String>(
+                value: model,
+                child: Text(model.isEmpty ? 'স্বয়ংক্রিয় (fallback সহ)' : model),
+              ),
+          ],
+          onChanged: (value) => setState(() => _model = value ?? ''),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          children: [
+            FilledButton.icon(
+              onPressed: _checking ? null : _save,
+              icon: const Icon(Icons.save_outlined),
+              label: Text(_checking ? 'যাচাই হচ্ছে…' : 'Save key'),
+            ),
+            OutlinedButton.icon(
+              onPressed: _checking ? null : _test,
+              icon: const Icon(Icons.check_circle_outline),
+              label: const Text('Test key'),
+            ),
+            if (_saved)
+              OutlinedButton.icon(
+                onPressed: _checking ? null : _delete,
+                icon: const Icon(Icons.delete_outline),
+                label: const Text('Delete'),
+              ),
+          ],
+        ),
+        if (_message.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Text(_message),
+          ),
       ],
     );
   }
