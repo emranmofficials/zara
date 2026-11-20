@@ -27,6 +27,7 @@ object ZaraDiagnostics {
 
     private val events = ArrayDeque<Event>()
     private val counts = mutableMapOf<String, Int>()
+    @Volatile private var appContext: Context? = null
     private val fmt = SimpleDateFormat("MM-dd HH:mm:ss.SSS", Locale.getDefault())
     private const val MAX = 250
     private const val FILE_NAME = "ZaRa_Diagnostics.txt"
@@ -39,7 +40,10 @@ object ZaraDiagnostics {
         while (events.size > MAX) events.removeFirst()
         val key = "$tag|$lv|${message.take(120)}"
         counts[key] = (counts[key] ?: 0) + 1
-        if (lv == "ERROR" || lv == "FATAL") android.util.Log.e("ZaRaDiag", "$tag: $message", error)
+        if (lv == "ERROR" || lv == "FATAL") {
+            android.util.Log.e("ZaRaDiag", "$tag: $message", error)
+            appContext?.let { ctx -> runCatching { flush(ctx) } }
+        }
     }
 
     fun mark(stage: String) = log("FLOW", stage)
@@ -122,6 +126,7 @@ object ZaraDiagnostics {
 
     /** সব uncaught exception এখানে ধরা পড়ে — ক্র্যাশের আগে রিপোর্ট ফ্লাশ হয়। */
     fun install(context: Context) {
+        appContext = context.applicationContext
         val previous = Thread.getDefaultUncaughtExceptionHandler()
         Thread.setDefaultUncaughtExceptionHandler { thread, error ->
             log("FATAL", "thread=${thread.name}", error)
