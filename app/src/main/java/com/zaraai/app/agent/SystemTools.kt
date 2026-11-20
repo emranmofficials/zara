@@ -10,7 +10,7 @@ import android.content.pm.PackageManager
 import android.hardware.camera2.CameraManager
 import android.media.AudioManager
 import android.net.Uri
-import android.provider.SearchManager
+import android.app.SearchManager
 import android.provider.Settings
 import android.view.KeyEvent
 import androidx.core.content.ContextCompat

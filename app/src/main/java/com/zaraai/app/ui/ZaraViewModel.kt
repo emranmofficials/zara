@@ -113,13 +113,13 @@ class ZaraViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     private fun setup() {
-        buildAutomationTools(app, consent, memory).forEach { tools.register(it) }
-        buildSystemTools(app, consent, guardian).forEach { tools.register(it) }
+        buildAutomationTools(appContext, consent, memory).forEach { tools.register(it) }
+        buildSystemTools(appContext, consent, guardian).forEach { tools.register(it) }
         buildAccessibilityTools(consent, guardian).forEach { tools.register(it) }
-        buildCameraTools(app, consent, guardian).forEach { tools.register(it) }
-        buildContactTools(app, consent, guardian).forEach { tools.register(it) }
+        buildCameraTools(appContext, consent, guardian).forEach { tools.register(it) }
+        buildContactTools(appContext, consent, guardian).forEach { tools.register(it) }
         buildConnectorTools({ _ui.value.settings }).forEach { tools.register(it) }
-        buildResearchTools(app, { _ui.value.settings }).forEach { tools.register(it) }
+        buildResearchTools(appContext, { _ui.value.settings }).forEach { tools.register(it) }
         viewModelScope.launch {
             val saved = settingsRepo.flow.first()
             _ui.value = _ui.value.copy(settings = saved)
