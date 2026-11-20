@@ -57,13 +57,21 @@ class TtsEngine(context: Context) {
     }
 
     private fun applyInternal(p: VoiceProfile) {
+        val voices = system.voices.orEmpty()
         val chosen: Voice? = if (p.voiceName.isNotBlank())
-            system.voices?.firstOrNull { it.name == p.voiceName }
-        else
-            system.voices?.firstOrNull {
-                it.locale.language.equals("bn", ignoreCase = true) &&
-                    !it.isNetworkConnectionRequired
+            voices.firstOrNull { it.name == p.voiceName }
+                ?: voices.firstOrNull { it.name.contains(p.voiceName, ignoreCase = true) }
+        else {
+            val bangla = voices.filter {
+                it.locale.language.equals("bn", ignoreCase = true)
             }
+            // প্রথমে বাংলা নারী/প্রাণবন্ত কন্ঠ, তারপর যেকোনো বাংলা কন্ঠ
+            bangla.firstOrNull { v ->
+                listOf("female", "woman", "women", "shimmer", "zira", "kanya", "priya", "samantha")
+                    .any { k -> v.name.contains(k, ignoreCase = true) }
+            } ?: bangla.firstOrNull { !it.isNetworkConnectionRequired }
+            ?: bangla.firstOrNull()
+        }
         if (chosen != null) system.setVoice(chosen) else system.setLanguage(Locale("bn", "BD"))
         system.setSpeechRate(p.speed)
         system.setPitch(p.pitch)

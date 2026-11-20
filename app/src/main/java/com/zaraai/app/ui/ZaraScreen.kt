@@ -166,7 +166,7 @@ fun ZaraScreen(vm: ZaraViewModel, onRequestScreen: () -> Unit) {
                 label = { Text("বাংলা ভয়েস (খালি = স্বয়ংক্রিয়)") },
                 modifier = Modifier.fillMaxWidth())
             OutlinedTextField(speed, { speed = it },
-                label = { Text("গতি — 1.0 স্বাভাবিক (ZaRa 1.05)") },
+                label = { Text("গতি — 1.0 স্বাভাবিক (ZaRa 1.08)") },
                 modifier = Modifier.fillMaxWidth())
             OutlinedTextField(pitch, { pitch = it },
                 label = { Text("স্বর — 1.0 স্বাভাবিক") },
@@ -180,7 +180,7 @@ fun ZaraScreen(vm: ZaraViewModel, onRequestScreen: () -> Unit) {
             Button(onClick = {
                 vm.saveSettings(ui.settings.copy(
                     apiKey = key, baseUrl = url, voiceName = voice,
-                    speed = speed.toFloatOrNull() ?: 1.05f,
+                    speed = speed.toFloatOrNull() ?: 1.08f,
                     pitch = pitch.toFloatOrNull() ?: 1.0f,
                     ttsModel = ttsModel, ttsVoice = ttsVoice
                 ))

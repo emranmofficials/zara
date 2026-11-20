@@ -11,29 +11,29 @@ object ZaraBehavior {
     const val LISTENING = "শোনছি…"
     const val THINKING = "ভাবছি…"
     const val WAKE_ACK = "বলো, শুনছি।"
-    const val NO_SPEECH = "কিছু শোনা গেলো না। একটু কাছ থেকে আবার বলো।"
+    const val NO_SPEECH = "কিছু শোনা গেলো না। একটু কাছে থেকে আবার বলো।"
     const val STOPPED = "থামলাম। বাকিটা কাটা দিলাম।"
     const val TIMEOUT = "সময় শেষ। বাকি কাজ বাতিল — আবার বলো।"
-    const val DECLINED = "চালাইনি। অনুমতি না দিলে চলবে না। পরের রাস্তা বলো।"
-    const val NEED_KEY = "সেটিংসে নিজস্ব API key দাও। তারপর কথা বলো।"
-    const val READY = "প্রস্তুত"
+    const val DECLINED = "চালাইনি। অনুমতি না দিলে চলবে না। পরের রাস্তা দেখি?"
+    const val NEED_KEY = "সেটিংসে নিজস্ব key দাও। তারপর কথা বলো।"
+    const val READY = "প্রস্তুত, বলো।"
     const val NO_INTERNET = "নেটওয়ার্ক পাইনি। সংযোগ ঠিক করে আবার বলো।"
-    const val LOCKED = "আগে নিজের unlock দিয়ে নিশ্চিত হও। তারপর চালাই।"
+    const val LOCKED = "আগে unlock দিয়ে নিশ্চিত হও। তারপর চালাই।"
 
-    fun greeting() = "আমি ZaRa। বলো, কোথা থেকে শুরু করি?"
+    fun greeting() = "ZaRa here। বলো, কোথা থেকে শুরু করি?"
     fun identity() = "ZaRa — বাংলা-প্রথম ভয়েস অ্যাসিস্টেন্ট। নতুন নাম, নিজস্ব কন্ঠ। কাজের কথা বলো।"
     fun capabilities() =
         "এখন আছে: সময়, ব্যাটারি, ভলিউম/রিংগার/টর্চ, অ্যাপ খোলা, ওয়েব সার্চ, " +
         "নোট/মেমরি, রিমাইন্ডার, স্ক্রিন অনুমতি, স্কিল ও মিশন, রোল-গেট, ঘুম/ড্রাইভিং মোড। " +
         "সব নিজস্ব infrastructure — কোনটা চাই?"
-    fun howAreYou() = "ভালো আছি, কাজের মুডে। তোমার কী খবর?"
+    fun howAreYou() = "ভালো আছি, কাজের মুডে। তুমি কেমন?"
     fun thanks() = "কিছু না। বলো, পরের কাজটা কী?"
     fun maker() = "আমি ZaRa — নতুন করে বানানো, নিজস্ব ইনফ্রাস্ট্রাকচারে। মালিক তুমি, কন্ঠ আমার।"
-    fun whatsNew() = "নতুন আছে barge-in, turn-taking আর unlock-গেট। থামালেই কেটে দিই, কথা শেষ করে না।"
+    fun whatsNew() = "barge-in, turn-taking আর unlock-গেট এসেছে। থামালেই কেটে দিই, বাক্য শেষ করে না।"
     fun bye() = "চলো, থাকি। আবার ডাকলে আছি।"
     fun time(value: String) = "এখন $value।"
     fun battery(level: Int) = "ব্যাটারি $level%। চলবে, চিন্তা নেই।"
-    fun toolDone(tool: String) = "$tool হয়ে গেল। আর কিছু?"
+    fun toolDone(tool: String) = "$tool হয়ে গেল। আর?"
     fun error(reason: String?) =
         "একটা গাফিলতি হলো" + (reason?.let { ": $it" } ?: "") + "। আবার চেষ্টা করি?"
     fun confirmPrompt(tool: String, args: JSONObject) =

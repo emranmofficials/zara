@@ -2,6 +2,7 @@ package com.zaraai.app.ui
 
 import android.app.Application
 import android.content.Intent
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.work.Data
@@ -113,23 +114,27 @@ class ZaraViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     private fun setup() {
-        buildAutomationTools(appContext, consent, memory).forEach { tools.register(it) }
-        buildSystemTools(appContext, consent, guardian).forEach { tools.register(it) }
-        buildAccessibilityTools(consent, guardian).forEach { tools.register(it) }
-        buildCameraTools(appContext, consent, guardian).forEach { tools.register(it) }
-        buildContactTools(appContext, consent, guardian).forEach { tools.register(it) }
-        buildConnectorTools({ _ui.value.settings }).forEach { tools.register(it) }
-        buildResearchTools(appContext, { _ui.value.settings }).forEach { tools.register(it) }
-        viewModelScope.launch {
-            val saved = settingsRepo.flow.first()
-            _ui.value = _ui.value.copy(settings = saved)
-            configureTts(saved)
-            VoiceSession.state.collect { st ->
-                _ui.value = _ui.value.copy(listening = st.listening, status = st.status)
+        Log.d("ZaRaInit", "setup start")
+        runCatching {
+            buildAutomationTools(appContext, consent, memory).forEach { tools.register(it) }
+            buildSystemTools(appContext, consent, guardian).forEach { tools.register(it) }
+            buildAccessibilityTools(consent, guardian).forEach { tools.register(it) }
+            buildCameraTools(appContext, consent, guardian).forEach { tools.register(it) }
+            buildContactTools(appContext, consent, guardian).forEach { tools.register(it) }
+            buildConnectorTools({ _ui.value.settings }).forEach { tools.register(it) }
+            buildResearchTools(appContext, { _ui.value.settings }).forEach { tools.register(it) }
+            viewModelScope.launch {
+                val saved = settingsRepo.flow.first()
+                _ui.value = _ui.value.copy(settings = saved)
+                configureTts(saved)
+                VoiceSession.state.collect { st ->
+                    _ui.value = _ui.value.copy(listening = st.listening, status = st.status)
+                }
             }
-        }
-        VoiceSession.onUtterance = { pcm -> onUtterance(pcm) }
-        VoiceSession.onBargeIn = { bargeIn() }
+            VoiceSession.onUtterance = { pcm -> onUtterance(pcm) }
+            VoiceSession.onBargeIn = { bargeIn() }
+        }.onFailure { Log.e("ZaRaInit", "setup failed", it) }
+        Log.d("ZaRaInit", "setup done")
     }
 
     fun saveSettings(s: ZaraSettings) = viewModelScope.launch {

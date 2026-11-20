@@ -19,7 +19,7 @@ data class ZaraSettings(
     val pitch: Float = SpeechMode.PUNCHY.pitch,
     val speechMode: String = SpeechMode.PUNCHY.name,
     val ttsModel: String = "gpt-4o-mini-tts",
-    val ttsVoice: String = "nova",
+    val ttsVoice: String = "shimmer",
     /** ব্যবহারকারীর নিজস্ব connector endpoint — JSON map, কোনো Maya host নয়। */
     val connectorsJson: String = "{}"
 )
@@ -47,7 +47,7 @@ class Settings(private val context: Context) {
             pitch = p[keyPitch]?.toFloatOrNull() ?: mode.pitch,
             speechMode = mode.name,
             ttsModel = p[keyTtsModel] ?: "gpt-4o-mini-tts",
-            ttsVoice = p[keyTtsVoice] ?: "nova",
+            ttsVoice = p[keyTtsVoice] ?: "shimmer",
             connectorsJson = p[keyConnectors] ?: "{}"
         )
     }

@@ -40,15 +40,22 @@ class CloudTtsEngine(private val context: Context) {
                         .put("voice", cfg.ttsVoice)
                         .put("input", text)
                         .put("response_format", "mp3")
-                        .toString().toRequestBody("application/json".toMediaType())
+                    // gpt-4o-সিরিজের TTS-এ স্বর নির্দেশ দেওয়া যায়; অন্য endpoint এটা ignore করে
+                    if (cfg.ttsModel.contains("gpt-4o", ignoreCase = true))
+                        body.put(
+                            "instructions",
+                            "বাংলা (Bangla) বলো। উষ্ণ, আত্মবিশ্বাসী, চটপট নারী কন্ঠ। " +
+                                "ছোট বাক্য, স্পষ্ট উচ্চারণ, সামান্য মজার ভঙ্গি।"
+                        )
+                    val payload = body.toString().toRequestBody("application/json".toMediaType())
                     val request = Request.Builder()
                         .url(cfg.baseUrl.trimEnd('/') + "/audio/speech")
                         .header("Authorization", "Bearer ${cfg.apiKey}")
-                        .post(body).build()
+                        .post(payload).build()
                     client.newCall(request).execute().use { r ->
                         if (!r.isSuccessful) throw IllegalStateException("TTS HTTP ${r.code}")
                         val file = File(context.cacheDir, "zara_speech.mp3")
-                        file.writeBytes(r.body!!.bytes())
+                        file.writeBytes(r.body?.bytes() ?: throw IllegalStateException("খালি অডিও"))
                         file
                     }
                 }

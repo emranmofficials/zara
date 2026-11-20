@@ -6,6 +6,6 @@ package com.zaraai.app.data
  */
 data class VoiceProfile(
     val voiceName: String = "",     // খালি = প্রথম উপলব্ধ bn voice
-    val speed: Float = 1.05f,       // একটু চটপট
-    val pitch: Float = 1.0f
+    val speed: Float = 1.08f,       // চটপট, কিন্তু স্পষ্ট
+    val pitch: Float = 1.06f        // একটু উঁচু — প্রাণবন্ত অনুভূতি
 )
