@@ -38,6 +38,7 @@ import com.zaraai.app.data.Settings
 import com.zaraai.app.data.SpeechMode
 import com.zaraai.app.data.VoiceProfile
 import com.zaraai.app.data.ZaraSettings
+import com.zaraai.app.diag.ZaraDiagnostics
 import com.zaraai.app.voice.ApiSttEngine
 import com.zaraai.app.voice.MediaProjectionGate
 import com.zaraai.app.voice.SystemSttEngine
@@ -133,7 +134,10 @@ class ZaraViewModel(app: Application) : AndroidViewModel(app) {
             }
             VoiceSession.onUtterance = { pcm -> onUtterance(pcm) }
             VoiceSession.onBargeIn = { bargeIn() }
-        }.onFailure { Log.e("ZaRaInit", "setup failed", it) }
+        }.onFailure {
+            Log.e("ZaRaInit", "setup failed", it)
+            ZaraDiagnostics.log("START", "setup failed", it)
+        }
         Log.d("ZaRaInit", "setup done")
     }
 
@@ -301,7 +305,8 @@ class ZaraViewModel(app: Application) : AndroidViewModel(app) {
                 VoiceSession.update(status = "তুমি শেষ হলে বলি — শুনছি")
             TurnTakingGate.Decision.SPEAK -> {
                 VoiceSession.update(status = ZaraBehavior.READY)
-                tts.speak(polished)
+                runCatching { tts.speak(polished) }
+                    .onFailure { ZaraDiagnostics.log("TTS", "VM speak threw", it) }
             }
         }
     }

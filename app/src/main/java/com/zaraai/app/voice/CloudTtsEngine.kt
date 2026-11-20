@@ -65,14 +65,21 @@ class CloudTtsEngine(private val context: Context) {
                 onFailure = {
                     isSpeaking = false
                     VoiceSession.isSpeaking = false
-                    onError(it as? Exception ?: Exception(it))
+                    com.zaraai.app.diag.ZaraDiagnostics.log("TTS-cloud", "network/TTS failed", it)
+                    runCatching { onError(it as? Exception ?: Exception(it)) }
                 }
             )
         }
     }
 
     private fun play(file: File, onDone: () -> Unit) {
-        val mp = MediaPlayer()
+        val mp = runCatching { MediaPlayer() }.getOrElse {
+            com.zaraai.app.diag.ZaraDiagnostics.log("TTS-cloud", "MediaPlayer init failed", it)
+            isSpeaking = false
+            VoiceSession.isSpeaking = false
+            runCatching { onDone() }
+            return
+        }
         player = mp
         try {
             mp.setDataSource(file.absolutePath)

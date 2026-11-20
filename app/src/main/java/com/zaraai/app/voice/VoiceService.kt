@@ -65,9 +65,13 @@ class VoiceService : Service() {
     private fun startCapture() {
         VoiceSession.update(listening = true, status = "শোনছি…")
         scope.launch {
-            val vad = Vad()
-            AudioCapture().pcmStream()
-                .catch { VoiceSession.update(listening = false, status = "মাইক ত্রুটি: ${it.message}") }
+            runCatching {
+                val vad = Vad()
+                AudioCapture().pcmStream()
+                .catch { e ->
+                    com.zaraai.app.diag.ZaraDiagnostics.log("STT", "mic stream error", e)
+                    VoiceSession.update(listening = false, status = "মাইক ত্রুটি: ${e.message}")
+                }
                 .collect { frame ->
                     val speaking = vad.isSpeech(frame)
                     VoiceSession.update(userSpeaking = speaking)
@@ -78,6 +82,10 @@ class VoiceService : Service() {
                         VoiceSession.onUtterance?.invoke(utterance)
                     }
                 }
+            }.onFailure { e ->
+                com.zaraai.app.diag.ZaraDiagnostics.log("STT", "mic capture crashed", e)
+                VoiceSession.update(listening = false, status = "মাইক ত্রুটি: ${e.message}")
+            }
         }
     }
 

@@ -1,10 +1,12 @@
 package com.zaraai.app
 
 import android.app.Application
+import com.zaraai.app.diag.ZaraDiagnostics
 
 class ZaraApplication : Application() {
     override fun onCreate() {
         super.onCreate()
-        ZaraCrashHandler.install(this)
+        ZaraDiagnostics.install(this)
+        ZaraDiagnostics.mark("APP onCreate")
     }
 }

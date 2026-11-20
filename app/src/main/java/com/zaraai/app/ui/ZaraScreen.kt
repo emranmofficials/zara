@@ -1,5 +1,8 @@
 package com.zaraai.app.ui
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import android.content.Intent
 import android.provider.Settings
 import androidx.compose.foundation.layout.Arrangement
@@ -28,6 +31,7 @@ import com.zaraai.app.agent.ModeManager
 import com.zaraai.app.agent.VoiceGuardian
 import com.zaraai.app.agent.ZaraBehavior
 import com.zaraai.app.data.SpeechMode
+import com.zaraai.app.diag.ZaraDiagnostics
 import com.zaraai.app.voice.VoiceService
 
 @Composable
@@ -35,6 +39,7 @@ fun ZaraScreen(vm: ZaraViewModel, onRequestScreen: () -> Unit) {
     val ui by vm.ui.collectAsState()
     val context = LocalContext.current
     var showSettings by remember { mutableStateOf(false) }
+    var showDiag by remember { mutableStateOf(false) }
     var typed by remember { mutableStateOf("") }
 
     Column(Modifier.padding(16.dp)) {
@@ -92,6 +97,10 @@ fun ZaraScreen(vm: ZaraViewModel, onRequestScreen: () -> Unit) {
                 )
             }
         }) { Text("নোটিফিকেশন অনুমতি") }
+        Button(onClick = {
+            ZaraDiagnostics.flush(context)
+            showDiag = true
+        }) { Text("ডায়াগনস্টিক রিপোর্ট") }
 
         // প্রসঙ্গ-সচেতন মোড ও রোল — কখন কথা বলবে, কী করতে পারবে
         Text("মোড", style = MaterialTheme.typography.titleSmall)
@@ -187,6 +196,24 @@ fun ZaraScreen(vm: ZaraViewModel, onRequestScreen: () -> Unit) {
                 showSettings = false
             }) { Text("সংরক্ষণ") }
         }
+    }
+
+    if (showDiag) {
+        AlertDialog(
+            onDismissRequest = { showDiag = false },
+            title = { Text("ZaRa ডায়াগনস্টিকস") },
+            text = { Text(ZaraDiagnostics.report().take(4000)) },
+            confirmButton = {
+                Button(onClick = {
+                    runCatching {
+                        val cm = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                        cm.setPrimaryClip(ClipData.newPlainText("ZaRa diagnostics", ZaraDiagnostics.report()))
+                    }
+                    showDiag = false
+                }) { Text("কপি করো") }
+            },
+            dismissButton = { Button(onClick = { showDiag = false }) { Text("বন্ধ") } }
+        )
     }
 
     ui.confirmation?.let { pending ->

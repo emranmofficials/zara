@@ -26,8 +26,13 @@ class ToolRegistry {
 
     suspend fun call(name: String, args: JSONObject): JSONObject {
         val started = System.currentTimeMillis()
-        val result = tools[name]?.run?.invoke(args)
-            ?: JSONObject().put("error", "unknown tool: $name")
+        val result = runCatching {
+            tools[name]?.run?.invoke(args)
+                ?: JSONObject().put("error", "unknown tool: $name")
+        }.getOrElse { t ->
+            com.zaraai.app.diag.ZaraDiagnostics.log("TOOL", "$name threw", t)
+            JSONObject().put("error", "$name ব্যর্থ: ${t.message}")
+        }
         synchronized(recent) {
             recent.addLast(Triple(name, System.currentTimeMillis() - started, !result.has("error")))
             while (recent.size > 30) recent.removeFirst()

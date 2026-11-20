@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.ViewModelProvider
+import com.zaraai.app.diag.ZaraDiagnostics
 import com.zaraai.app.ui.SecureGate
 import com.zaraai.app.ui.ZaRaApp
 import com.zaraai.app.ui.ZaRaRoute
@@ -37,6 +38,7 @@ class MainActivity : FragmentActivity() {
         var failure: String? = null
         var vm: ZaraViewModel? = null
         var startRoute = ZaRaRoute.HOME
+        ZaraDiagnostics.mark("MainActivity onCreate")
 
         // ধাপ ১ — অনুমতি (আসল চালুর আগে, আলাদা guarding)
         try {
@@ -58,6 +60,7 @@ class MainActivity : FragmentActivity() {
             }
         } catch (t: Throwable) {
             Log.e("ZaRaStart", "permission stage failed", t)
+            ZaraDiagnostics.log("START", "permission stage failed", t)
             failure = "অনুমতি ধাপ: ${t.stackTraceToString().take(1600)}"
         }
 
@@ -68,6 +71,7 @@ class MainActivity : FragmentActivity() {
                 zaraViewModel = vm
             } catch (t: Throwable) {
                 Log.e("ZaRaStart", "viewmodel stage failed", t)
+                ZaraDiagnostics.log("START", "viewmodel stage failed", t)
                 failure = "ViewModel ধাপ: ${t.stackTraceToString().take(1600)}"
             }
         }
@@ -85,9 +89,12 @@ class MainActivity : FragmentActivity() {
                 }
             } catch (t: Throwable) {
                 Log.e("ZaRaStart", "gate stage failed", t)
+                ZaraDiagnostics.log("START", "gate stage failed", t)
                 failure = "Gate ধাপ: ${t.stackTraceToString().take(1600)}"
             }
         }
+
+        if (failure != null) ZaraDiagnostics.flush(applicationContext)
 
         // ধাপ ৪ — UI
         setContent {
