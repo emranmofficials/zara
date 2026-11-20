@@ -1,5 +1,12 @@
 include: package:flutter_lints/flutter.yaml
 
+analyzer:
+  errors:
+    # Flutter 3.50 deprecates material.dart in favour of material_ui.dart, but
+    # the former is still fully functional. Keep the codebase buildable on
+    # both older and newer SDKs without a wholesale UI rewrite.
+    deprecated_member_use: ignore
+
 linter:
   rules:
     avoid_print: false

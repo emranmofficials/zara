@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:speech_to_text/speech_recognition_error.dart' as stt;
+import 'package:speech_to_text/speech_recognition_result.dart' as stt;
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 
 import '../theme/persona.dart';
@@ -91,11 +93,11 @@ class VoiceSession {
     if (!_ready) return false;
 
     await _applyTtsSettings();
-    await _tts.setCompletionHandler(() {
+    _tts.setCompletionHandler(() {
       _speaking = false;
       _emit(VoiceStage.idle);
     });
-    await _tts.setErrorHandler((msg) {
+    _tts.setErrorHandler((msg) {
       _speaking = false;
       _emit(VoiceStage.idle);
       debugPrint('ZaRa TTS error: $msg');
@@ -112,7 +114,7 @@ class VoiceSession {
   void updateConfig(VoiceConfig config) {
     _config = config;
     if (_wakeEngine is KeywordWakeWordEngine) {
-      (_wakeEngine as KeywordWakeWordEngine).updateWords(config.wakeWords);
+      _wakeEngine.updateWords(config.wakeWords);
     }
     if (_ready) _applyTtsSettings();
   }
@@ -123,10 +125,12 @@ class VoiceSession {
     _emit(VoiceStage.listening);
     await _speech.listen(
       onResult: _onResult,
-      localeId: _config.localeId,
-      partialResults: true,
-      cancelOnError: true,
-      listenMode: stt.ListenMode.confirmation,
+      listenOptions: stt.SpeechListenOptions(
+        localeId: _config.localeId,
+        partialResults: true,
+        cancelOnError: true,
+        listenMode: stt.ListenMode.confirmation,
+      ),
     );
   }
 

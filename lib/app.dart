@@ -2,10 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'core/navigation/routes.dart';
+import 'core/theme/persona.dart';
 import 'core/theme/persona_theme.dart';
-import 'features/chat/chat_screen.dart';
-import 'features/home/home_screen.dart';
-import 'features/settings/settings_screen.dart';
 import 'shared/widgets/app_drawer.dart';
 import 'state/app_state.dart';
 

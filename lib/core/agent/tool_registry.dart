@@ -50,12 +50,16 @@ abstract final class ToolRegistry {
 
   static int _distance(String a, String b) {
     final dp = List.generate(a.length + 1, (i) => List<int>.filled(b.length + 1, i));
-    for (var j = 0; j <= b.length; j++) dp[0][j] = j;
+    for (var j = 0; j <= b.length; j++) {
+      dp[0][j] = j;
+    }
     for (var i = 1; i <= a.length; i++) {
       for (var j = 1; j <= b.length; j++) {
         dp[i][j] = a[i - 1] == b[j - 1]
             ? dp[i - 1][j - 1]
-            : 1 + [dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1]].reduce((x, y) => x < y ? x : y);
+            : 1 + [dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1]].reduce((x, y) {
+                return x < y ? x : y;
+              });
       }
     }
     return dp[a.length][b.length];

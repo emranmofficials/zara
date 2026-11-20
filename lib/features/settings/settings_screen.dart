@@ -6,7 +6,6 @@ import '../../core/agent/tool_registry.dart';
 import '../../core/keys/key_store.dart';
 import '../../core/notifications/reply_sender.dart';
 import '../../core/services/backend_client.dart';
-import '../../core/services/voice_session.dart';
 import '../../core/theme/persona.dart';
 import '../../state/app_state.dart';
 
@@ -42,7 +41,7 @@ class SettingsScreen extends StatelessWidget {
             const SizedBox(width: 8),
             Expanded(
               child: DropdownButtonFormField<String>(
-                value: config.localeId,
+                initialValue: config.localeId,
                 decoration: const InputDecoration(labelText: 'Recognition locale'),
                 items: const [
                   DropdownMenuItem(value: 'en_US', child: Text('English (US)')),
