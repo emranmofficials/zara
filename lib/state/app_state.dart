@@ -47,6 +47,7 @@ class AppState extends ChangeNotifier {
   int _energy = 72;
   String? _attachment;
   bool _oldChat = false;
+  final Map<String, bool> _flags = <String, bool>{};
 
   Persona get persona => _persona;
   String get route => _route;
@@ -163,6 +164,14 @@ class AppState extends ChangeNotifier {
 
   void setOldChat(bool value) {
     _oldChat = value;
+    notifyListeners();
+  }
+
+  /// Persistent switches for the many settings / rules pages.
+  bool flag(String key, {bool fallback = false}) => _flags[key] ?? fallback;
+
+  void setFlag(String key, bool value) {
+    _flags[key] = value;
     notifyListeners();
   }
 

@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
 
 import '../../features/chat/chat_screen.dart';
-import '../../features/common/secondary_screen.dart';
+import '../../features/devices/device_hub_screen.dart';
 import '../../features/home/home_screen.dart';
+import '../../features/rules/rules_screen.dart';
 import '../../features/scanner/scanner_screen.dart';
+import '../../features/settings/setting_detail_screen.dart';
 import '../../features/settings/settings_screen.dart';
+import '../../features/system/info_screen.dart';
+import '../../features/system/permissions_screen.dart';
+import '../../features/tools/tool_screens.dart';
 import '../../features/vibes/vibes_screen.dart';
 import '../../features/memory/yaadein_screen.dart';
 import 'route_meta.dart';
@@ -155,6 +160,23 @@ abstract final class RoutePage {
         Routes.chat => const ChatScreen(),
         Routes.scanner => const ScannerScreen(),
         Routes.settings => const SettingsScreen(),
-        _ => SecondaryScreen(route: route),
+        Routes.keySetup || Routes.settingsBackup || Routes.settingsVoiceEngine =>
+          const SettingsScreen(),
+        Routes.permissions => const PermissionsScreen(),
+        Routes.zaraHome => const DeviceHubScreen(),
+        Routes.pcHub => const DeviceHubScreen(pc: true),
+        Routes.zaraRules => const RulesScreen(),
+        Routes.eventTriggers => const RulesScreen(triggers: true),
+        Routes.markets => const MarketsScreen(),
+        Routes.marketing => const MarketingScreen(),
+        Routes.codeProjects => const CodeProjectsScreen(),
+        Routes.documents => const DocumentsScreen(),
+        Routes.myPictures => const PicturesScreen(),
+        Routes.terminal => const TerminalScreen(),
+        Routes.qrScan => const QrScanScreen(),
+        Routes.whiteboard => const WhiteboardScreen(),
+        _ when RouteCatalog.find(route)?.group == RouteGroup.settings =>
+          SettingsDetailScreen(route: route),
+        _ => InfoScreen(route: route),
       };
 }

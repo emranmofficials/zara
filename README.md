@@ -50,6 +50,10 @@ for x86_64 still work. The same commands run natively on a normal Flutter host.
 - **Vibes** — mood selection with persona-matched energy
 - **Scanner** — camera permission flow, standby/live/recording state machine,
   flip/capture controls and "send detected text to chat"
+- **Every other route has a real screen** — device/PC hub, rules & event
+  triggers, markets, marketing, code projects, documents, pictures, terminal,
+  QR scan, a drawable whiteboard, a settings-detail family with working
+  switches, a permissions manager and static info pages
 - **Personas** — 4 original personas with generated Material 3 themes
 - **Voice** — `speech_to_text` ASR + `flutter_tts` TTS + pluggable `WakeWordEngine`
   (keyword spotter on partial transcripts, or inject your own `.tflite` engine)
@@ -80,7 +84,7 @@ lib/core/services     Gemini, backend client, voice session, wake word engine
 lib/core/theme        personas + themes
 lib/core/notifications RemoteInput reply bridge
 lib/features          Home, Chat, Vibes, Yaadein, Scanner, Settings,
-                      shared secondary-route screen
+                      devices, rules, tools, system (permissions + info)
 lib/state             AppState
 server/               optional Python FastAPI backend
 test/                 widget + unit tests
