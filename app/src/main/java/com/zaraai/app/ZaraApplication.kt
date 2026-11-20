@@ -8,5 +8,6 @@ class ZaraApplication : Application() {
         super.onCreate()
         ZaraDiagnostics.install(this)
         ZaraDiagnostics.mark("APP onCreate")
+        ZaraDiagnostics.flush(this)
     }
 }

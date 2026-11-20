@@ -40,8 +40,8 @@ object ZaraDiagnostics {
         while (events.size > MAX) events.removeFirst()
         val key = "$tag|$lv|${message.take(120)}"
         counts[key] = (counts[key] ?: 0) + 1
-        if (lv == "ERROR" || lv == "FATAL") {
-            android.util.Log.e("ZaRaDiag", "$tag: $message", error)
+        if (lv == "ERROR" || lv == "FATAL" || lv == "WARN" || lv == "FLOW") {
+            if (lv == "ERROR" || lv == "FATAL") android.util.Log.e("ZaRaDiag", "$tag: $message", error)
             appContext?.let { ctx -> runCatching { flush(ctx) } }
         }
     }
