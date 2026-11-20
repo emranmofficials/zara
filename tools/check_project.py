@@ -67,10 +67,12 @@ def main() -> int:
             errors.append(f"stray CJK script in {dart.relative_to(ROOT)}")
 
     manifest = (ROOT / "android/app/src/main/AndroidManifest.xml").read_text(encoding="utf-8")
-    gradle = (ROOT / "android/app/build.gradle").read_text(encoding="utf-8")
+    gradle = (ROOT / "android/app/build.gradle.kts").read_text(encoding="utf-8")
     pubspec = (ROOT / "pubspec.yaml").read_text(encoding="utf-8")
     if "com.zaraai.app" not in gradle:
-        errors.append("applicationId missing in build.gradle")
+        errors.append("applicationId missing in build.gradle.kts")
+    if "dev.flutter.flutter-gradle-plugin" not in gradle:
+        errors.append("Flutter v2 embedding plugin missing in build.gradle.kts")
     if "networkSecurityConfig" not in manifest:
         errors.append("networkSecurityConfig missing in manifest")
     if "name: zara" not in pubspec:
