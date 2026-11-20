@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../core/agent/tool_dispatcher.dart';
+import '../core/keys/key_store.dart';
 import '../core/models/models.dart';
 import '../core/navigation/routes.dart';
 import '../core/notifications/reply_sender.dart';
@@ -18,6 +19,7 @@ class AppState extends ChangeNotifier {
   /// [enableVoice] = false keeps platform channels untouched (used in widget tests).
   AppState({this.enableVoice = true}) {
     _initVoice();
+    _loadSetupFlags();
     if (enableVoice) _startNotificationPolling();
   }
 
@@ -176,6 +178,31 @@ class AppState extends ChangeNotifier {
     _flags[key] = value;
     notifyListeners();
   }
+
+  /// Load the Gemini setup state so Home can offer a visible entry point.
+  /// Failures are ignored: tests and locked-down devices simply keep the
+  /// in-memory defaults.
+  Future<void> _loadSetupFlags() async {
+    try {
+      final values = await Future.wait([
+        KeyStore.instance.read(KeyStoreKeys.geminiDocSeen),
+        KeyStore.instance.read(KeyStoreKeys.geminiEngineInstalled),
+        KeyStore.instance.read(KeyStoreKeys.gemini),
+        KeyStore.instance.read(KeyStoreKeys.backendUrl),
+      ]);
+      _flags[KeyStoreKeys.geminiDocSeen] = values[0] == '1';
+      _flags[KeyStoreKeys.geminiEngineInstalled] = values[1] == '1';
+      _flags[KeyStoreKeys.gemini] = (values[2] ?? '').trim().isNotEmpty;
+      _flags[KeyStoreKeys.backendUrl] = (values[3] ?? '').trim().isNotEmpty;
+      notifyListeners();
+    } catch (_) {}
+  }
+
+  bool get geminiDocSeen => flag(KeyStoreKeys.geminiDocSeen);
+  bool get geminiEngineInstalled => flag(KeyStoreKeys.geminiEngineInstalled);
+  bool get geminiCredentialReady =>
+      flag(KeyStoreKeys.gemini) || flag(KeyStoreKeys.backendUrl);
+  bool get setupComplete => geminiEngineInstalled && geminiCredentialReady;
 
   /// A quick action from Home pre-fills the composer and opens Chat.
   void startQuickAction(String label) {

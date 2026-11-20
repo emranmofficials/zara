@@ -42,8 +42,10 @@ for x86_64 still work. The same commands run natively on a normal Flutter host.
   5-destination bottom nav and mic FAB
 - **Navigation** — custom StateFlow-like route state (`RouteRegistry` / `RoutePage`),
   57 generated routes with Hinglish/Bengali voice aliases (longest alias wins)
-- **Home** — time-based greeting, live voice state, mood cards, energy meter,
-  weather/today cards and 12 quick-action chips
+- **Home** — Maya-style persona hero with an animated orb (tap to talk),
+  time-based greeting, live voice state, mood cards, energy meter,
+  weather/today cards, a visible Gemini setup banner (doc → engine → key) and
+  12 quick-action chips
 - **Chat** — live/old-chat header, history & clear, reply chip, attachment chip,
   message variants (text/voice/tool) and the pending-voice-reply confirm card
 - **Yaadein** — date-grouped memories combined with backend memory facts

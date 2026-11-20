@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../core/models/models.dart';
 import '../../core/theme/persona.dart';
+import '../../shared/widgets/voice_orb.dart';
 import '../../state/app_state.dart';
 
 class ChatScreen extends StatefulWidget {
@@ -172,9 +173,15 @@ class _ChatScreenState extends State<ChatScreen> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.chat_bubble_outline, size: 40, color: accent.withOpacity(0.6)),
+                      VoiceOrb(
+                        color: accent,
+                        status: state.voiceStatus,
+                        size: 120,
+                        compact: true,
+                        onTap: state.toggleListening,
+                      ),
                       const SizedBox(height: 8),
-                      const Text('Ask me anything — ya mic dabao.'),
+                      const Text('যেকোনো কিছু জিজ্ঞেস করুন — বা মাইক টিপুন।'),
                     ],
                   ),
                 )

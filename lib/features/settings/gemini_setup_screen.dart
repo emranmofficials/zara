@@ -38,6 +38,7 @@ class _GeminiSetupScreenState extends State<GeminiSetupScreen> {
   }
 
   Future<void> _load() async {
+    final state = context.read<AppState>();
     String? seen;
     String? installed;
     String doc;
@@ -48,6 +49,11 @@ class _GeminiSetupScreenState extends State<GeminiSetupScreen> {
       ]);
       seen = values[0];
       installed = values[1];
+      final creds = await _credentials();
+      state.setFlag(KeyStoreKeys.geminiDocSeen, seen == '1');
+      state.setFlag(KeyStoreKeys.geminiEngineInstalled, installed == '1');
+      state.setFlag(KeyStoreKeys.gemini, creds.$1);
+      state.setFlag(KeyStoreKeys.backendUrl, creds.$2);
     } catch (_) {
       // Secure storage unavailable (e.g. widget tests) — fall back to the
       // in-memory gate, which still enforces doc-before-engine.
@@ -77,7 +83,9 @@ class _GeminiSetupScreenState extends State<GeminiSetupScreen> {
       // Best-effort persistence: the in-memory gate still holds for this run.
     }
     if (!mounted) return;
-    await context.read<AppState>().speakBengali('ডক ফাইল দেখা হয়েছে।');
+    final state = context.read<AppState>();
+    state.setFlag(KeyStoreKeys.geminiDocSeen, true);
+    await state.speakBengali('ডক ফাইল দেখা হয়েছে।');
   }
 
   Future<void> _installEngine() async {
@@ -91,25 +99,32 @@ class _GeminiSetupScreenState extends State<GeminiSetupScreen> {
     try {
       await KeyStore.instance.save(KeyStoreKeys.geminiEngineInstalled, '1');
     } catch (_) {}
-    final hasCredential = await _hasCredential();
     if (!mounted) return;
-    if (!hasCredential) {
+    final state = context.read<AppState>();
+    state.setFlag(KeyStoreKeys.geminiEngineInstalled, true);
+    final (hasKey, hasBackend) = await _credentials();
+    state.setFlag(KeyStoreKeys.gemini, hasKey);
+    state.setFlag(KeyStoreKeys.backendUrl, hasBackend);
+    if (!mounted) return;
+    if (!hasKey && !hasBackend) {
       setState(() => _message =
           'জেমেনি ইঞ্জিন ইনস্টল হয়েছে — কিন্তু API key বা backend URL এখনো দেওয়া হয়নি।');
     }
-    await context.read<AppState>().speakBengali(_message);
+    await state.speakBengali(_message);
   }
 
-  Future<bool> _hasCredential() async {
+  Future<(bool, bool)> _credentials() async {
     try {
       final values = await Future.wait([
         KeyStore.instance.read(KeyStoreKeys.gemini),
         KeyStore.instance.read(KeyStoreKeys.backendUrl),
       ]);
-      return (values[0] ?? '').trim().isNotEmpty ||
-          (values[1] ?? '').trim().isNotEmpty;
+      return (
+        (values[0] ?? '').trim().isNotEmpty,
+        (values[1] ?? '').trim().isNotEmpty
+      );
     } catch (_) {
-      return false;
+      return (false, false);
     }
   }
 

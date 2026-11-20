@@ -1,12 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:zara/app.dart';
+import 'package:zara/shared/widgets/voice_orb.dart';
 
 void main() {
+  setUp(() => VoiceOrb.animate = false);
+  tearDown(() => VoiceOrb.animate = true);
+
   testWidgets('ZaRa renders the Maya-style home shell', (tester) async {
     await tester.pumpWidget(const ZaraApp(enableVoice: false));
     expect(find.textContaining('ZaRa'), findsWidgets);
     expect(find.byType(Scaffold), findsWidgets);
+    expect(find.byType(VoiceOrb), findsOneWidget);
+    expect(find.text('Setup'), findsOneWidget); // Gemini setup entry point
+    await tester.scrollUntilVisible(
+      find.text('Weather'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
     expect(find.text('Weather'), findsOneWidget);
     expect(find.text('Energy'), findsOneWidget);
     await tester.scrollUntilVisible(

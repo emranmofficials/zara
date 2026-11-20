@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/navigation/routes.dart';
+import '../../core/services/language_policy.dart';
 import '../../core/theme/persona.dart';
+import '../../shared/widgets/voice_orb.dart';
 import '../../state/app_state.dart';
 
 const _moods = <(String, String)>[
@@ -39,6 +41,16 @@ class HomeScreen extends StatelessWidget {
     return 'Good night';
   }
 
+  String _statusLine(AppState state) {
+    if (state.voiceError.isNotEmpty) return 'মাইক বন্ধ — Settings-এ দেখুন';
+    return switch (state.voiceStatus) {
+      VoiceStatus.idle => 'আমি প্রস্তুত — কথা বলুন বা টিপুন',
+      VoiceStatus.listening => 'শুনছি…',
+      VoiceStatus.thinking => 'ভাবছি…',
+      VoiceStatus.speaking => 'বলছি…',
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
@@ -46,7 +58,7 @@ class HomeScreen extends StatelessWidget {
     final accent = state.persona.seed;
 
     return ListView(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
       children: [
         // ---- Greeting header ----
         Row(
@@ -57,19 +69,107 @@ class HomeScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text('${_greeting()}, ${state.persona.label}',
-                      style: theme.textTheme.headlineMedium),
+                      style: theme.textTheme.headlineMedium
+                          ?.copyWith(fontWeight: FontWeight.w700)),
                   const SizedBox(height: 4),
                   Text(state.persona.tagline, style: theme.textTheme.bodyLarge),
                 ],
               ),
             ),
             CircleAvatar(
-              backgroundColor: accent,
-              child: const Icon(Icons.auto_awesome, color: Colors.white),
+              radius: 24,
+              backgroundColor: accent.withOpacity(0.18),
+              child: Icon(Icons.auto_awesome, color: accent),
             ),
           ],
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
+
+        // ---- Hero: animated orb, the live focal point ----
+        Card(
+          elevation: 2,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 18),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(28),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  accent.withOpacity(0.14),
+                  theme.colorScheme.surface,
+                  accent.withOpacity(0.06),
+                ],
+              ),
+            ),
+            child: Column(
+              children: [
+                VoiceOrb(
+                  color: accent,
+                  status: state.voiceStatus,
+                  size: 180,
+                  onTap: state.toggleListening,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  _statusLine(state),
+                  style: theme.textTheme.titleMedium
+                      ?.copyWith(color: accent, fontWeight: FontWeight.w600),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 2),
+                Text('${state.persona.label} · ${LanguagePolicy.name}',
+                    style: theme.textTheme.bodySmall),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+
+        // ---- Gemini setup entry: always visible until setup is complete ----
+        if (!state.setupComplete)
+          Card(
+            color: theme.colorScheme.primaryContainer.withOpacity(0.55),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            child: Padding(
+              padding: const EdgeInsets.all(14),
+              child: Row(
+                children: [
+                  Icon(Icons.description_outlined, color: accent),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          !state.geminiEngineInstalled
+                              ? 'Gemini setup — প্রথমে install doc'
+                              : 'Gemini key বা backend URL দিন',
+                          style: theme.textTheme.titleSmall
+                              ?.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                        Text(
+                          !state.geminiEngineInstalled
+                              ? 'Doc দেখে না দেখেই engine install করা যাবে না।'
+                              : 'Engine install হয়েছে — এখন key সেট করলেই চলবে।',
+                          style: theme.textTheme.bodySmall,
+                        ),
+                      ],
+                    ),
+                  ),
+                  FilledButton(
+                    onPressed: () => state.navigate(!state.geminiEngineInstalled
+                        ? Routes.settingsGeminiSetup
+                        : Routes.keySetup),
+                    child: const Text('Setup'),
+                  ),
+                ],
+              ),
+            ),
+          ),
 
         // ---- Live state indicators ----
         Wrap(
@@ -98,12 +198,16 @@ class HomeScreen extends StatelessWidget {
               ),
           ],
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 14),
 
         // ---- Voice note / pending action banner ----
-        if (state.offer != null || state.pending != null || state.pendingTool != null)
+        if (state.offer != null ||
+            state.pending != null ||
+            state.pendingTool != null)
           Card(
             color: accent.withOpacity(0.12),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             child: Padding(
               padding: const EdgeInsets.all(14),
               child: Row(
@@ -153,12 +257,13 @@ class HomeScreen extends StatelessWidget {
                 child: ChoiceChip(
                   label: Column(
                     children: [
-                      Text(emoji, style: const TextStyle(fontSize: 20)),
+                      Text(emoji, style: const TextStyle(fontSize: 22)),
                       Text(label, style: theme.textTheme.bodySmall),
                     ],
                   ),
                   selected: selected,
                   selectedColor: accent.withOpacity(0.25),
+                  showCheckmark: false,
                   onSelected: (_) {
                     state.setMood(label);
                     state.setAction('Mood set to $label');
@@ -172,6 +277,8 @@ class HomeScreen extends StatelessWidget {
 
         // ---- Energy meter ----
         Card(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
@@ -185,11 +292,14 @@ class HomeScreen extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 10),
-                LinearProgressIndicator(
-                  value: state.energy / 100,
-                  minHeight: 10,
+                ClipRRect(
                   borderRadius: BorderRadius.circular(8),
-                  color: accent,
+                  child: LinearProgressIndicator(
+                    value: state.energy / 100,
+                    minHeight: 10,
+                    color: accent,
+                    backgroundColor: accent.withOpacity(0.14),
+                  ),
                 ),
                 const SizedBox(height: 6),
                 Text('Adjust how much ${state.persona.label} speaks and acts.',
@@ -270,7 +380,10 @@ class HomeScreen extends StatelessWidget {
 
   String _today() {
     final now = DateTime.now();
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    ];
     return '${now.day} ${months[now.month - 1]}';
   }
 }
@@ -316,6 +429,7 @@ class _InfoCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: Padding(
         padding: const EdgeInsets.all(14),
         child: Column(

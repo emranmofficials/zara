@@ -21,6 +21,28 @@ abstract final class PersonaTheme {
             ? SystemUiOverlayStyle.light
             : SystemUiOverlayStyle.dark,
       ),
+      // Rounded, soft surfaces everywhere — keeps secondary screens visually
+      // consistent with the Home orb/card language.
+      cardTheme: CardThemeData(
+        elevation: 0,
+        margin: const EdgeInsets.symmetric(vertical: 6),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(color: persona.seed.withOpacity(0.14)),
+        ),
+      ),
+      dialogTheme: DialogThemeData(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      ),
+      bottomSheetTheme: const BottomSheetThemeData(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+      ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
         backgroundColor: persona.seed,
       ),

@@ -375,8 +375,12 @@ class _BackendFieldState extends State<_BackendField> {
         const SizedBox(height: 8),
         FilledButton(
           onPressed: () async {
+            final appState = context.read<AppState>();
             await KeyStore.instance.save(KeyStoreKeys.backendUrl, _url.text);
             await KeyStore.instance.save(KeyStoreKeys.backendToken, _token.text);
+            if (!mounted) return;
+            appState.setFlag(
+                KeyStoreKeys.backendUrl, _url.text.trim().isNotEmpty);
             setState(() => _message = 'সংরক্ষিত। সরাসরি key মোডে URL খালি রাখুন।');
           },
           child: const Text('Save backend settings'),
@@ -437,7 +441,11 @@ class _KeyFieldState extends State<_KeyField> {
         const SizedBox(height: 8),
         FilledButton(
           onPressed: () async {
+            final appState = context.read<AppState>();
             await KeyStore.instance.save(KeyStoreKeys.gemini, _controller.text);
+            if (!mounted) return;
+            appState.setFlag(
+                KeyStoreKeys.gemini, _controller.text.trim().isNotEmpty);
             setState(() => _message = 'এই ডিভাইসে সংরক্ষিত।');
           },
           child: const Text('Save key'),
