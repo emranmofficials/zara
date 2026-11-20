@@ -71,6 +71,8 @@ void main() {
       await engine.feedFeatures(Float32List.fromList([0.0]));
       score = 0.9;
       await engine.feedFeatures(Float32List.fromList([1.0]));
+      // Broadcast streams deliver to listeners in a later microtask.
+      await Future<void>.delayed(const Duration(milliseconds: 20));
       expect(hits, 1);
       engine.dispose();
     });
