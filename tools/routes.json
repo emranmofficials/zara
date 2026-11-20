@@ -1,0 +1,8 @@
+{
+  "routes": ["home", "chat", "settings", "permissions"],
+  "phrases": {
+    "chat": ["chat", "reply", "جواب", "reply bhejo"],
+    "settings": ["settings", "config", "key"],
+    "home": ["home", "start"]
+  }
+}

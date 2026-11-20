@@ -1,0 +1,32 @@
+# Dart / Flutter
+.dart_tool/
+.packages
+.pub-cache/
+.flutter-plugins
+.flutter-plugins-dependencies
+build/
+*.log
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Android
+android/local.properties
+android/.gradle/
+android/app/build/
+android/key.properties
+*.jks
+*.keystore
+
+# Python backend
+__pycache__/
+*.py[cod]
+server/zara_data.json
+server/zara_data.json.tmp
+server/.venv/
+server/venv/
+
+# OS
+.DS_Store

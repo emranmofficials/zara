@@ -1,0 +1,2 @@
+// Repositories and plugin versions are declared centrally in settings.gradle.
+// Kept intentionally empty so Gradle uses dependencyResolutionManagement.

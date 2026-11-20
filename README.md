@@ -1,0 +1,120 @@
+# ZaRa
+
+Voice-first assistant app. Package: `com.zaraai.app`. Flutter 3.4+ / Dart 3.4+.
+
+This is a **clean-room** implementation inspired by the *architecture* of a
+studied app. No proprietary assets, branding, model files or license-bypass
+code are included.
+
+## Quick start
+
+```sh
+flutter pub get
+flutter test          # widget + unit tests
+flutter run           # device / emulator
+```
+
+Release APK:
+
+```sh
+flutter build apk --release
+```
+
+## What is inside
+
+- **Shell** — single `AppShell` with drawer, bottom nav and mic FAB
+- **Navigation** — custom StateFlow-like route state (`RouteRegistry` / `RoutePage`)
+- **Personas** — 4 original personas with generated Material 3 themes
+- **Voice** — `speech_to_text` ASR + `flutter_tts` TTS + pluggable `WakeWordEngine`
+  (keyword spotter on partial transcripts, or inject your own `.tflite` engine)
+- **Agent** — tool registry (tier budget, fuzzy `find_tool`), Gemini function
+  calling and a confirm gate for external actions
+- **Notifications** — `NotificationListenerService` reads reply actions only
+  from a supported chat package whitelist, and sends through Android's public
+  `RemoteInput` API (never accessibility clicks). Expired tokens are pruned
+  from the in-memory cache automatically.
+- **Backend** — optional Python FastAPI proxy (`server/`) for Gemini, tools,
+  memory/history, backup/export-import, device tokens and chat summaries
+
+## Settings
+
+- Gemini API key (encrypted, on-device) **or** backend URL + Bearer token
+- Persona, recognition locale, speech rate, wake words, test voice
+- Notification access, tool budget info
+- Chat summary, backup export/import, device register/revoke
+
+No message is ever sent without a confirmation card.
+
+## Structure
+
+```
+lib/core/agent        tool registry + dispatcher + confirm gate
+lib/core/navigation   StateFlow-like routes
+lib/core/services     Gemini, backend client, voice session, wake word engine
+lib/core/theme        personas + themes
+lib/core/notifications RemoteInput reply bridge
+lib/features          Home, Chat, Settings
+lib/state             AppState
+server/               optional Python FastAPI backend
+test/                 widget + unit tests
+tools/                route codegen (Python)
+```
+
+## Regenerate routes
+
+```sh
+python3 tools/generate_routes.py
+```
+
+## Offline preflight (no Flutter SDK needed)
+
+```sh
+python3 tools/check_project.py
+```
+
+Checks Python syntax, Dart import targets, stray scripts, package name,
+manifest and required files.
+
+## Release signing
+
+```sh
+python3 tools/generate_keystore.py          # prompts for passwords
+# or: ZARA_STORE_PASSWORD=... ZARA_KEY_PASSWORD=... python3 tools/generate_keystore.py
+flutter build apk --release
+```
+
+The script creates `android/app/zara-release.jks` and `android/key.properties`
+(both gitignored). `android/key.properties.example` shows the format. Without a
+keystore the release build is unsigned; debug builds use the default debug key.
+
+Debug builds allow cleartext HTTP for the local backend through a debug-only
+network security config; release builds stay HTTPS-only.
+
+## CI
+
+`.github/workflows/ci.yml` runs `flutter analyze`, `flutter test`, a debug APK
+build and Python syntax checks on every push/PR.
+
+## Backend logic test (no dependencies)
+
+```sh
+python3 server/smoke_test.py     # 15 checks: auth, tools, confirm, memory, backup, devices, summary
+```
+
+It stubs FastAPI/pydantic/httpx and exercises the real endpoint functions, so it
+works even where those packages cannot be installed.
+
+## Backend
+
+See `server/README.md`. Run without a key in the app:
+
+```sh
+cd server && pip install -r requirements.txt
+GEMINI_API_KEY="..." ZARA_TOKEN="master-secret" uvicorn main:app --reload --port 8000
+```
+
+Then set **Backend URL** to `http://10.0.2.2:8000` (emulator) or your LAN IP.
+
+> The Android shell used to generate this project is aarch64 and has no
+> Flutter SDK; sources were verified statically (Python syntax, Dart imports,
+> stray characters). Run `flutter test` on a proper SDK host before release.
