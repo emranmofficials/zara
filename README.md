@@ -20,6 +20,22 @@ Release APK:
 flutter build apk --release
 ```
 
+### On this ARM64 Android device (no native Flutter SDK)
+
+A working Flutter 3.50.1 SDK (with the matching ARM64 Dart 3.14.0 and engine
+artifacts) is installed at `~/flutter-sdk`, inside the Ubuntu 24.04 ARM64
+`proot-distro` container. Two wrappers live in `tools/`:
+
+```sh
+sh tools/flutter-proot.sh pub get     # analyze, test, doctor - native ARM64
+sh tools/flutter-proot.sh test
+sh tools/flutter-build-proot.sh apk --debug   # QEMU-emulates x86_64 aapt2/adb
+```
+
+`flutter-proot.sh` runs Flutter/Dart natively; `flutter-build-proot.sh` adds
+`proot --qemu=qemu-x86_64-static` so Android SDK tools that Google only ships
+for x86_64 still work. The same commands run natively on a normal Flutter host.
+
 ## What is inside
 
 - **Shell** — single `AppShell` with drawer, bottom nav and mic FAB
