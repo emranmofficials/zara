@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">ZaRa</string>
+    <string name="mic_button">কথা বলুন</string>
+    <string name="listening">শোনছি…</string>
+    <string name="thinking">ভাবছি…</string>
+    <string name="settings">সেটিংস</string>
+    <string name="api_key_hint">আপনার নিজস্ব API key</string>
+    <string name="base_url_hint">OpenAI-সামঞ্জস্যপূর্ণ endpoint (ঐচ্ছিক)</string>
+    <string name="confirm_title">অনুমতি চাই</string>
+    <string name="confirm_yes">হ্যাঁ, চালাও</string>
+    <string name="confirm_no">না</string>
+    <string name="a11y_description">ZaRa শুধু তোমার স্পষ্ট অনুমতিতেই স্ক্রিনে টিপ দেয় বা লেখা পড়ে। সবসময় দৃশ্যমান ইঙ্গিত থাকে। কোনো গোপন ক্যাপচার বা আপলোড নেই।</string>
+</resources>

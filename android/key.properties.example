@@ -1,6 +1,0 @@
-# Copy to android/key.properties and fill in real values.
-# NEVER commit the real file (it is gitignored).
-storeFile=app/zara-release.jks
-storePassword=CHANGE_ME
-keyAlias=zara
-keyPassword=CHANGE_ME

@@ -1,162 +1,100 @@
 # ZaRa
 
-Voice-first assistant app. Package: `com.zaraai.app`. Flutter 3.4+ / Dart 3.4+.
+> **Maya-র সাথে A-to-Z ফিচার/ওয়ার্কফ্লো ম্যাপ:** [`PARITY.md`](PARITY.md) — প্রতিটি সেকশনে কী আছে, কী নিজস্ব সমতুল্য, কী key/config-নির্ভর, আর কী সীমার বাইরে তা লিস্ট করা আছে।
 
-This is a **clean-room** implementation inspired by the *architecture* of a
-studied app. No proprietary assets, branding, model files or license-bypass
-code are included.
+# ZaRa — বাংলা-প্রথম ভয়েস অ্যাসিস্টেন্ট (v0.1)
 
-## Quick start
+- **অ্যাপ:** ZaRa · **প্যাকেজ:** `com.zaraai.app` · **প্রধান ভাষা:** বাংলা (`bn-BD`)
+- নতুন পরিচয়, নিজস্ব infrastructure। Maya-র কোনো name, endpoint, secret, pin,
+  OAuth client ID বা মডেল অ্যাসেট এখানে ব্যবহার করা হয়নি।
 
-```sh
-flutter pub get
-flutter test          # widget + unit tests
-flutter run           # device / emulator
-```
+## বাংলা-প্রথম নীতি
+- TTS locale `bn-BD`; STT-তে `language=bn`; wake word `ও জারা` / `জারা` / `zara`
+- Stop-word ডিটেক্টরে বাংলা `থামো / থাম / রুক / বন্ধ / বাদ দাও / চলো না` প্রথম
+- মডেল system prompt বাংলা উত্তর বাধ্যতামূলক করে; UI-র সব string বাংলা
 
-Release APK:
+## v1 (এখন আছে)
+- ন্যূনতম manifest: RECORD_AUDIO, INTERNET, microphone foreground service
+- **মাইক wiring**: `VoiceService` foreground capture → `AudioCapture` (16 kHz + AEC)
+  → `Vad` → `VoiceSession` → ViewModel → STT → Agent → TTS; UI-তে "কথা বলুন / থামো" বাটন
+- STT: user-key OpenAI-compatible `/audio/transcriptions` (`language=bn`)
+- TTS: system `bn-BD`; wake word `ও জারা / জারা`
+- **ZaRa persona**: Maya-র মতো আত্মবিশ্বাসী, চটপট, কড়া-মজার স্বর —
+  নিজস্ব লেখা বাংলা system prompt (`ZaraPersona.kt`); কোনো Maya string কপি নয়
+- **মানুষের মতো কন্ঠ (`CloudTtsEngine.kt` + `TtsEngine`)**: তোমার নিজস্ব API key দিয়ে
+  OpenAI-সামঞ্জস্যপূর্ণ `/audio/speech`-এ neural TTS কল হয় (মডেল `gpt-4o-mini-tts` / `tts-1`,
+  কন্ঠ `nova / shimmer / onyx / alloy / echo / fable`) → MP3 MediaPlayer-এ বাজে; barge-in-এ থামে।
+  কোনো key/নেটওয়ার্ক না থাকলে সিস্টেম TTS-এ ফলব্যাক; তোমার বসানো on-device মডেল সবার আগে চলে।
+  **কোনো Maya voice pack/native মডেল বান্ডেল নেই**
+- **কথা বলার মোড (`SpeechMode.kt`)**: UI-তে ৪টি বাটন — **চটপট / শান্ত / কড়া / মজার**।
+  মোড বদলালেই system prompt-এর স্বর-নির্দেশ + TTS গতি/স্বর দুটোই বদলে যায়;
+  "কন্ঠ শুনে দেখো" বাটনে বর্তমান কন্ঠে এক লাইন শোনা যায়
+- **স্থায়ী আচরণকোষ (`ZaraBehavior.kt`)**: LLM না থাকলেও ZaRa একই স্বরে কথা বলে —
+  অভিবাদন, পরিচয়, সামর্থ্য, থামা, সময় শেষ, অনুমতি না পাওয়া, ত্রুটি — সব নিজস্ব বাংলা বাক্য।
+  মডেলের উত্তর `polish()` দিয়ে markdown বাদ, ৩ ছোট বাক্য, ফল-প্রথম করা হয়
+- **Barge-in**: কথা বলার মাঝে ব্যবহারকারী কথা বললেই `VoiceService` → `VoiceSession.bargeIn()`
+  → চলতি agentJob বাতিল + TTS `stop()` + "থামলাম। বাকিটা কাটা দিলাম।"
+- **Turn-taking**: `TurnTakingGate` এখন কার্যকরভাবে ব্যবহৃত — ব্যবহারকারী কথা বলছে কি না (VAD `isSpeech`)
+  দেখে SPEAK / DEFER / SUPPRESS সিদ্ধান্ত; ওভারল্যাপ করে কথা বলা হয় না
+- **Wake gate**: `ও জারা` / `জারা` শোনা গেলে prefix কেটে "বলো, শুনছি।" — পরে কমান্ড চালানো হয়
+- **Local fallback**: সময়/পরিচয়/সামর্থ্যের মতো দ্রুত প্রশ্ন API ছাড়াই উত্তর পায়;
+  UI-তে "লিখে বলো" ফিল্ড দিয়ে API key ছাড়া persona টেস্ট করা যায়
+- Agent core: StopWordDetector (৬-টোকন cancel window), fixed ToolRegistry,
+  ModelClient (user-key chat endpoint),
+  AgentLoop (tool call → **বাংলা confirmation dialog** → result → history, 180 s timeout)
+- **Dialogue coverage (`ZaraBehavior.kt`)**: অভিবাদন, পরিচয়, সামর্থ্য, "কেমন আছো", ধন্যবাদ,
+  নতুন কী, বিদায়, সময়, ব্যাটারি, টুল-সমাপ্তি, ত্রুটি, নেটওয়ার্ক — সব নিজস্ব বাংলা বাক্য,
+  একই আত্মবিশ্বাসী ভঙ্গি। কোনো Maya string কপি নয়
+- **On-device model hook (`OnDeviceEngines.kt`)**: তোমার নিজস্ব Piper/Kokoro/Whisper/Silero মডেল
+  `installStt()` / `installTts()` দিয়ে বসানো যায়। **কোনো মডেল অ্যাপে বান্ডেল করা নেই**
+- **Unlock (`SecureGate.kt` + `BiometricPrompt`)**: সংবেদনশীল টুলের আগে Android-র নিজস unlock
+  যাচাই; ZaRa কোনো PIN/pattern সংরক্ষণ বা replay করে না (spoofable receiver নেই)
+- Settings: DataStore-এ ব্যবহারকারীর নিজস্ব API key / endpoint / voice / speed / pitch
+- Compose UI (Bangla)
 
-```sh
-flutter build apk --release
-```
+## বাকি ধাপ — এই ব্যাচে যোগ হয়েছে
+- **কী-বিহীন STT (`SystemSttEngine.kt`)**: Android-র নিজস্ব SpeechRecognizer (`bn-BD`) —
+  API key ছাড়াই "কী ছাড়া শুনো" বাটনে কথা বুঝে; নেট/কী থাকলে neural `/audio/transcriptions` ব্যবহার হয়
+- **Consent framework (`ConsentManager.kt`)**: প্রতিটি সংবেদনশীল টুলের আগে biometric + এক-বারের,
+  ৬০ সেকেন্ডের grant; ব্যবহারের সাথে সাথে consume, barge-in-এ revoke
+- **Guardian (`Guardian.kt`)**: PIN/OTP/password-মতো argument বাতিল, ১২ কল/মিনিট রেট লিমিট,
+  privileged টুলে ২ সেকেন্ড cooldown, লগে redaction
+- **অটোমেশন টুল (`AutomationTools.kt`)**: আসল ব্যাটারি লেভেল, রিমাইন্ডার (AlarmManager +
+  `ReminderReceiver`), স্থানীয় নোট যোগ/খোঁজা — প্রতিটি ফিক্সড + consent-গেটেড
+- **Memory (`MemoryStore.kt`)**: সম্পূর্ণ স্থানীয় JSON, keyword scoring + embedding hook;
+  কোনো ক্লাউড আপলোড নেই
+- **Restart-storm guard (`RestartGuard.kt`)**: ১ মিনিটে ৫ বারের বেশি রিস্টার্ট হলে নীরব
+- **OAuth state (`OAuthState.kt`)**: নিজস্ব connector-এর জন্য random state + PKCE S256 + ১০ মিনিট expiry
+- **MediaProjection (`MediaProjectionGate.kt` + `ScreenCaptureService.kt`)**: শুধু Android-র
+  consent dialog; সবসময় দৃশ্যমান notification; ফ্রেম শুধু on-device sink-এ, কোনো আপলোড নেই
 
-### On this ARM64 Android device (no native Flutter SDK)
+## A-to-Z প্যারিটি ব্যাচ — নতুন করে যোগ হয়েছে
+- **১৩টি স্ক্রিন** (`ZaRaScreens.kt` + `ZaRaApp` হোস্ট): হোম, সহকারী, শ্রবণ, ভয়েস,
+  কনেক্টর, ব্রাউজার, কনসোল, ফেস গার্ড, গার্ড, আনলক, স্ক্রিন শেয়ার, অনুমতি, PC-তে পাঠাও
+- **বুট/সার্ভিস**: `BootReceiver` (ব্যবহারকারীর সুইচে rearm), `AssistantActivity` (`ACTION_ASSIST`),
+  `ZaraRecognitionService` (`bn-BD`), `ZaraVoiceInteractionService`, `ZaraWallpaperService`
+- **অটোমেশন**: `ZaraAccessibilityService` + `AccessibilityTools` (read/tap/key/swipe) —
+  দৃশ্যমান notification + প্রতি ধাপে biometric/consent; `CameraTools` (ছবি শুধু ডিভাইসে),
+  `ContactTools` (খোঁজা/যোগ করা, runtime permission সহ)
+- **কনেক্টর**: `ConnectorTools` — weather/news/search/market/email/`send_to_pc`, শুধু তোমার নিজস্ব `https://` URL/key
+- **ResearchTools**: `deep_research` (search + তোমার LLM key দিয়ে বাংলা সংক্ষেপ) + sandbox-এ ফাইল লেখা/পড়া — কোনো shell/deploy নেই
+- **ওয়ার্কার**: `ProactiveWorker`, `NoticeWorker`, `SocialAlarmReceiver`, `MarketingAlarmReceiver` —
+  কোনো সার্ভার পুশ নেই, শুধু স্থানীয় রিমাইন্ডার
+- **টুল কনসোল**: dedupe hint + latency/success log + in-app `read_page` + import/export
+- **ডাটা**: `ChatHistoryStore` এখন চ্যাটের সাথে সংরক্ষিত; `DataImporter` UI-তে wire;
+  export-এ API key কখনো লেখা হয় না
 
-A working Flutter 3.50.1 SDK (with the matching ARM64 Dart 3.14.0 and engine
-artifacts) is installed at `~/flutter-sdk`, inside the Ubuntu 24.04 ARM64
-`proot-distro` container. Two wrappers live in `tools/`:
+## এখনো তোমার নিজস্ব key/config ছাড়া পূর্ণ নয়
+- Google/GitHub/Notion-এর মতো OAuth connector-এর client ID
+- TFLite wake word / Silero VAD / Piper-Kokoro মডেল (মডেল তুমি বসাবে)
 
-```sh
-sh tools/flutter-proot.sh pub get     # analyze, test, doctor - native ARM64
-sh tools/flutter-proot.sh test
-sh tools/flutter-build-proot.sh apk --debug   # QEMU-emulates x86_64 aapt2/adb
-```
+## যেগুলো ইচ্ছেকৃতভাবে দেওয়া হয়নি
+- **Maya-র voice model / TTS অ্যাসেট** — IP কারণে কপি করা হয়নি; তার বদলে তোমার নিজস্ব ওপেন মডেল বসানোর hook আছে
+- **Maya-র বিল্ট-ইন dialogue string** — শাব্দিকভাবে কপি করা হয়নি; একই ভঙ্গির নতুন বাংলা dialogue আছে
+- **Remote `bash -lc` / server-pushed tool bundle** — এটা backdoor-র মতো; দেওয়া হয়নি। টুল fixed + প্রতি-অ্যাকশনে অনুমতি
+- **PIN/pattern replay** — দেওয়া হয়নি; Android-র `BiometricPrompt` দিয়ে নিজে unlock করো
+- কোনো embedded credential নেই — সব কিছু ব্যবহারকারীর নিজস্ব
 
-`flutter-proot.sh` runs Flutter/Dart natively; `flutter-build-proot.sh` adds
-`proot --qemu=qemu-x86_64-static` so Android SDK tools that Google only ships
-for x86_64 still work. The same commands run natively on a normal Flutter host.
-
-## What is inside
-
-- **Shell** — single `AppShell` with a grouped, searchable 57-route drawer,
-  5-destination bottom nav and mic FAB
-- **Navigation** — custom StateFlow-like route state (`RouteRegistry` / `RoutePage`),
-  57 generated routes with Hinglish/Bengali voice aliases (longest alias wins)
-- **Home** — Maya-style persona hero with an animated orb (tap to talk),
-  time-based greeting, live voice state, mood cards, energy meter,
-  weather/today cards, a visible Gemini setup banner (doc → engine → key) and
-  12 quick-action chips
-- **Chat** — live/old-chat header, history & clear, reply chip, attachment chip,
-  message variants (text/voice/tool) and the pending-voice-reply confirm card
-- **Yaadein** — date-grouped memories combined with backend memory facts
-- **Vibes** — mood selection with persona-matched energy
-- **Scanner** — camera permission flow, standby/live/recording state machine,
-  flip/capture controls and "send detected text to chat"
-- **Every other route has a real screen** — device/PC hub, rules & event
-  triggers, markets, marketing, code projects, documents, pictures, terminal,
-  QR scan, a drawable whiteboard, a settings-detail family with working
-  switches, a permissions manager and static info pages
-- **Personas** — 4 original personas with generated Material 3 themes
-- **Voice (Bengali-only for now)** — `speech_to_text` ASR (`bn_IN` / `bn_BD`)
-  + `flutter_tts` TTS (`bn-IN`) + pluggable `WakeWordEngine` (Bengali wake words,
-  keyword spotter on partial transcripts, or inject your own `.tflite` engine).
-  `lib/core/services/language_policy.dart` is the single source of truth for
-  ASR locale, TTS locale, wake words and every model prompt, so no
-  English/Hinglish answer can leak into the spoken pipeline.
-- **Agent** — tool registry (tier budget, fuzzy `find_tool`), Gemini function
-  calling and a confirm gate for external actions
-- **Notifications** — `NotificationListenerService` reads reply actions only
-  from a supported chat package whitelist, and sends through Android's public
-  `RemoteInput` API (never accessibility clicks). Expired tokens are pruned
-  from the in-memory cache automatically.
-- **Backend** — optional Python FastAPI proxy (`server/`) for Gemini, tools,
-  memory/history, backup/export-import, device tokens and chat summaries
-
-## Settings
-
-- **Gemini setup** — install doc first, then engine install. The bundled Bengali
-  doc (`assets/docs/gemini_install_bn.md`) must be opened and acknowledged before
-  the “ইঞ্জিন ইনস্টল করুন” button becomes enabled. Both flags persist in secure
-  storage, so restarting the app cannot skip the order. Voice phrase:
-  “জেমেনি ইন্সটল” / “gemini install doc”.
-- Gemini API key (encrypted, on-device) **or** backend URL + Bearer token
-- Persona, Bengali-only recognition locale, speech rate, Bengali wake words, test voice
-- Notification access, tool budget info
-- Chat summary, backup export/import, device register/revoke
-
-No message is ever sent without a confirmation card.
-
-## Structure
-
-```
-lib/core/agent        tool registry + dispatcher + confirm gate
-lib/core/navigation   StateFlow-like routes
-lib/core/services     Gemini, backend client, voice session, wake word engine
-lib/core/theme        personas + themes
-lib/core/notifications RemoteInput reply bridge
-lib/features          Home, Chat, Vibes, Yaadein, Scanner, Settings,
-                      devices, rules, tools, system (permissions + info)
-lib/state             AppState
-server/               optional Python FastAPI backend
-test/                 widget + unit tests
-tools/                route codegen (Python)
-```
-
-## Regenerate routes
-
-```sh
-python3 tools/generate_routes.py
-```
-
-## Offline preflight (no Flutter SDK needed)
-
-```sh
-python3 tools/check_project.py
-```
-
-Checks Python syntax, Dart import targets, stray scripts, package name,
-manifest and required files.
-
-## Release signing
-
-```sh
-python3 tools/generate_keystore.py          # prompts for passwords
-# or: ZARA_STORE_PASSWORD=... ZARA_KEY_PASSWORD=... python3 tools/generate_keystore.py
-flutter build apk --release
-```
-
-The script creates `android/app/zara-release.jks` and `android/key.properties`
-(both gitignored). `android/key.properties.example` shows the format. Without a
-keystore the release build is unsigned; debug builds use the default debug key.
-
-Debug builds allow cleartext HTTP for the local backend through a debug-only
-network security config; release builds stay HTTPS-only.
-
-## CI
-
-`.github/workflows/ci.yml` runs `flutter analyze`, `flutter test`, a debug APK
-build and Python syntax checks on every push/PR.
-
-## Backend logic test (no dependencies)
-
-```sh
-python3 server/smoke_test.py     # 15 checks: auth, tools, confirm, memory, backup, devices, summary
-```
-
-It stubs FastAPI/pydantic/httpx and exercises the real endpoint functions, so it
-works even where those packages cannot be installed.
-
-## Backend
-
-See `server/README.md`. Run without a key in the app:
-
-```sh
-cd server && pip install -r requirements.txt
-GEMINI_API_KEY="..." ZARA_TOKEN="master-secret" uvicorn main:app --reload --port 8000
-```
-
-Then set **Backend URL** to `http://10.0.2.2:8000` (emulator) or your LAN IP.
-
-> The Android shell used to generate this project is aarch64 and has no
-> Flutter SDK; sources were verified statically (Python syntax, Dart imports,
-> stray characters). Run `flutter test` on a proper SDK host before release.
+## ডিজাইন সীমাবদ্ধতা (design limits)
+- কোনো covert screen capture/upload নেই; MediaProjection হলে system consent + visible indicator থাকবে
+- কোনো spoofable receiver নেই; সব service `exported=false`
