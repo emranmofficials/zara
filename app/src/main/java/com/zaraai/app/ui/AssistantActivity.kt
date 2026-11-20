@@ -3,6 +3,7 @@ package com.zaraai.app.ui
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
+import com.zaraai.app.MainActivity
 
 /** Maya-র MayaAssistActivity-র নিজস্ব সমতুল্য — ACTION_ASSIST দিয়ে ZaRa কথা বলে। */
 class AssistantActivity : Activity() {

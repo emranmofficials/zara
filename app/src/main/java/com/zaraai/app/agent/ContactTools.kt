@@ -77,6 +77,7 @@ fun buildContactTools(context: Context, consent: ConsentManager, guardian: Voice
                             ContactsContract.CommonDataKinds.Phone.TYPE_MOBILE)
                     }
                 )
+                JSONObject().put("ok", true).put("name", name)
             } catch (e: Exception) {
                 JSONObject().put("error", "কনট্যাক্ট যোগ করা গেলো না: ${e.message}")
             }

@@ -10,6 +10,7 @@ import android.content.pm.PackageManager
 import android.hardware.camera2.CameraManager
 import android.media.AudioManager
 import android.net.Uri
+import android.provider.SearchManager
 import android.provider.Settings
 import android.view.KeyEvent
 import androidx.core.content.ContextCompat
@@ -121,7 +122,7 @@ fun buildSystemTools(
             if (q.isBlank()) return@Tool JSONObject().put("error", "কী খুঁজবো?")
             runCatching {
                 val i = Intent(Intent.ACTION_WEB_SEARCH).apply {
-                    putExtra(android.provider.SearchManager.QUERY, q)
+                    putExtra(SearchManager.QUERY, q)
                     addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 }
                 context.startActivity(i)

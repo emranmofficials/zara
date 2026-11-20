@@ -257,9 +257,9 @@ fun WatchGuardScreen(vm: ZaraViewModel) {
         Text("শুধু দৃশ্যমান ইঙ্গিত ও biometric — অনধিকৃত স্পর্শে গোপন ছবি তোলা হয় না।")
         Row {
             Text("গার্ড ${if (on) "চালু" else "বন্ধ"}")
-            Switch(checked = on, onValueChange = {
-                on = it
-                if (it) vm.setDeviceMode(ModeManager.Mode.NORMAL)
+            Switch(checked = on, onCheckedChange = { checked ->
+                on = checked
+                if (checked) vm.setDeviceMode(ModeManager.Mode.NORMAL)
             })
         }
     }
@@ -314,9 +314,9 @@ fun ToolPermissionScreen(vm: ZaraViewModel) {
         }) { Text("নোটিফিকেশন অনুমতি") }
         Row {
             Text("বুটে wake rearm")
-            Switch(checked = boot, onValueChange = {
-                boot = it
-                vm.setBootRearm(it)
+            Switch(checked = boot, onCheckedChange = { checked ->
+                boot = checked
+                vm.setBootRearm(checked)
             })
         }
         Button(onClick = { vm.scheduleProactiveNudge() }) { Text("proactive nudge") }

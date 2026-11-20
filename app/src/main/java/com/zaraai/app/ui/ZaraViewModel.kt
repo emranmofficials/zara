@@ -107,8 +107,12 @@ class ZaraViewModel(app: Application) : AndroidViewModel(app) {
         }
         if (!RestartGuard(app).allow()) {
             _ui.value = _ui.value.copy(status = "অনেকবার রিস্টার্ট হয়েছে — একটু পরে চালাও")
-            return
+        } else {
+            setup()
         }
+    }
+
+    private fun setup() {
         buildAutomationTools(app, consent, memory).forEach { tools.register(it) }
         buildSystemTools(app, consent, guardian).forEach { tools.register(it) }
         buildAccessibilityTools(consent, guardian).forEach { tools.register(it) }
@@ -407,7 +411,7 @@ class ZaraViewModel(app: Application) : AndroidViewModel(app) {
         speak("${data.notes.size} নোট ও ${data.messages.size} বার্তা আমদানি করা হয়েছে।")
     }
 
-    fun clearHistory() {
+    fun clearHistory() = viewModelScope.launch {
         historyStore.clear()
         speak("কথোপকথনের ইতিহাস মুছে ফেলা হয়েছে।")
     }

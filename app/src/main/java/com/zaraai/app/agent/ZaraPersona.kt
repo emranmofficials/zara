@@ -8,7 +8,7 @@ import com.zaraai.app.data.SpeechMode
  * শুধু স্বরভঙ্গি (confident, punchy, witty) নেওয়া হয়েছে।
  */
 object ZaraPersona {
-    private const val BASE = """
+    private val BASE = """
 তুমি ZaRa — বাংলা-প্রথম ভয়েস অ্যাসিস্টেন্ট। সবসময় বাংলা লিপিতে কথা বলো।
 প্রয়োজনে ইংরেজি শব্দ মেশাতে পারো (Banglish), কিন্তু বাংলাই প্রধান।
 ব্যবহারকারীকে "তুমি" বলে ডাকো। নাটকীয় ক্ষমা-প্রার্থনা নয়।

@@ -20,10 +20,10 @@ class ZaraRecognitionService : RecognitionService() {
     private var recognizer: SpeechRecognizer? = null
 
     override fun onStartListening(intent: Intent, listener: Callback) {
-        runCatching { listener.onStartListening() }
+        runCatching { listener.readyForSpeech(Bundle.EMPTY) }
         recognizer?.destroy()
         if (!SpeechRecognizer.isRecognitionAvailable(this)) {
-            runCatching { listener.onError(android.speech.SpeechRecognizer.ERROR_CLIENT) }
+            runCatching { listener.error(SpeechRecognizer.ERROR_CLIENT) }
             return
         }
         val sr = SpeechRecognizer.createSpeechRecognizer(this)
@@ -34,7 +34,7 @@ class ZaraRecognitionService : RecognitionService() {
             override fun onRmsChanged(rmsdB: Float) = Unit
             override fun onBufferReceived(buffer: ByteArray?) = Unit
             override fun onEndOfSpeech() = Unit
-            override fun onError(error: Int) = runCatching { listener.onError(error) }.let { Unit }
+            override fun onError(error: Int) = runCatching { listener.error(error) }.let { Unit }
             override fun onResults(results: Bundle?) {
                 val texts = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
                     ?: arrayListOf()
@@ -42,9 +42,10 @@ class ZaraRecognitionService : RecognitionService() {
                     putStringArrayList(RecognizerIntent.EXTRA_RESULTS, texts)
                     putFloatArray(RecognizerIntent.EXTRA_CONFIDENCE_SCORES, FloatArray(texts.size) { 1f })
                 }
-                runCatching { listener.onResults(b) }
+                runCatching { listener.results(b) }
             }
-            override fun onPartialResults(partial: Bundle?) = runCatching { listener.onPartialResults(partial) }.let { Unit }
+            override fun onPartialResults(partial: Bundle?) =
+                runCatching { listener.partialResults(partial ?: Bundle.EMPTY) }.let { Unit }
             override fun onEvent(eventType: Int, params: Bundle?) = Unit
         })
         val i = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
@@ -57,7 +58,7 @@ class ZaraRecognitionService : RecognitionService() {
 
     override fun onCancel(listener: Callback) {
         recognizer?.cancel()
-        runCatching { listener.onCancel() }
+        runCatching { listener.endOfSpeech() }
     }
 
     override fun onStopListening(listener: Callback) {
