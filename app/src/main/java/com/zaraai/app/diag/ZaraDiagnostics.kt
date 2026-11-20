@@ -69,6 +69,8 @@ object ZaraDiagnostics {
         val hints = mutableSetOf<String>()
         events.forEach { e ->
             when {
+                e.message.contains("401", true) || e.message.contains("API key", true) ->
+                    hints += "API KEY: সেটিংসে key/baseUrl ঠিক করো। বাতিল key-এ neural TTS বন্ধ, system TTS চলবে।"
                 e.tag.contains("TTS", true) -> hints += "TTS: নিজস্ব bn-BD voice/key যাচাই করো; fallback system TTS রাখো।"
                 e.tag.contains("STT", true) -> hints += "STT: মাইক অনুমতি ও bn-BD ইনপুট যাচাই করো।"
                 e.tag.contains("TOOL", true) -> hints += "TOOL: টুল আর্গুমেন্ট যাচাই করো; একক টুলের ব্যর্থতা অ্যাপকে মারবে না।"

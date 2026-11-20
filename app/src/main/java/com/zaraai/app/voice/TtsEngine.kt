@@ -22,6 +22,9 @@ class TtsEngine(context: Context) {
     private var systemSpeaking = false
     private var done: (() -> Unit)? = null
     private var cfg: TtsConfig? = null
+    /** 401/403 পেলে বারবার network call বন্ধ — সেটিংস বদলালে আবার চলবে। */
+    @Volatile var cloudKeyInvalid = false
+        private set
 
     private val cloud = CloudTtsEngine(context)
     private val system: TextToSpeech? = runCatching {
@@ -58,6 +61,7 @@ class TtsEngine(context: Context) {
     fun configure(config: TtsConfig) {
         cfg = config
         profile = config.profile
+        cloudKeyInvalid = false
         if (ready) runCatching { applyInternal(profile) }
             .onFailure { ZaraDiagnostics.log("TTS", "configure failed", it) }
     }
@@ -110,9 +114,18 @@ class TtsEngine(context: Context) {
                         }
                     VoiceSession.isSpeaking = true
                 }
-                cfg?.apiKey?.isNotBlank() == true -> {
+                cfg?.apiKey?.isNotBlank() == true && !cloudKeyInvalid -> {
                     cloud.speak(cfg!!, text, onDone = finish) { e ->
-                        ZaraDiagnostics.log("TTS-cloud", "cloud failed, system fallback", e)
+                        if (e is ZaraKeyRejected) {
+                            cloudKeyInvalid = true
+                            ZaraDiagnostics.log(
+                                "TTS-cloud",
+                                "API key বাতিল — system TTS-এ স্থায়ী fallback। সেটিংসে key/baseUrl ঠিক করো।",
+                                level = "WARN"
+                            )
+                        } else {
+                            ZaraDiagnostics.log("TTS-cloud", "cloud failed, system fallback", e)
+                        }
                         speakSystem(text, finish)
                     }
                 }

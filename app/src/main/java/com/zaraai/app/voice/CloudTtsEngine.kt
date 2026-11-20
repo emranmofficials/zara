@@ -15,6 +15,9 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
 import java.io.File
 
+/** API key বাতিল — 401/403। বারবার call না করে system TTS-এ থাকার জন্য আলাদা সংকেত। */
+class ZaraKeyRejected : IllegalStateException("API key বাতিল (401/403)")
+
 /**
  * মানুষের মতো কন্ঠ — user-Configured neural TTS endpoint (/audio/speech)।
  * কোনো Maya voice pack/native মডেল নেই; সব কিছু ব্যবহারকারীর নিজস্ব key ও endpoint।
@@ -53,6 +56,7 @@ class CloudTtsEngine(private val context: Context) {
                         .header("Authorization", "Bearer ${cfg.apiKey}")
                         .post(payload).build()
                     client.newCall(request).execute().use { r ->
+                        if (r.code == 401 || r.code == 403) throw ZaraKeyRejected()
                         if (!r.isSuccessful) throw IllegalStateException("TTS HTTP ${r.code}")
                         val file = File(context.cacheDir, "zara_speech.mp3")
                         file.writeBytes(r.body?.bytes() ?: throw IllegalStateException("খালি অডিও"))
@@ -65,7 +69,6 @@ class CloudTtsEngine(private val context: Context) {
                 onFailure = {
                     isSpeaking = false
                     VoiceSession.isSpeaking = false
-                    com.zaraai.app.diag.ZaraDiagnostics.log("TTS-cloud", "network/TTS failed", it)
                     runCatching { onError(it as? Exception ?: Exception(it)) }
                 }
             )
@@ -74,7 +77,6 @@ class CloudTtsEngine(private val context: Context) {
 
     private fun play(file: File, onDone: () -> Unit) {
         val mp = runCatching { MediaPlayer() }.getOrElse {
-            com.zaraai.app.diag.ZaraDiagnostics.log("TTS-cloud", "MediaPlayer init failed", it)
             isSpeaking = false
             VoiceSession.isSpeaking = false
             runCatching { onDone() }

@@ -307,6 +307,10 @@ class ZaraViewModel(app: Application) : AndroidViewModel(app) {
                 VoiceSession.update(status = ZaraBehavior.READY)
                 runCatching { tts.speak(polished) }
                     .onFailure { ZaraDiagnostics.log("TTS", "VM speak threw", it) }
+                if (tts.cloudKeyInvalid)
+                    _ui.value = _ui.value.copy(
+                        status = "API key কাজ করছে না — সিস্টেম কন্ঠে চলছি। সেটিংসে key ঠিক করো।"
+                    )
             }
         }
     }
