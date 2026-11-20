@@ -22,12 +22,17 @@ REQUIRED = [
     "lib/core/services/gemini_client.dart",
     "lib/core/services/voice_session.dart",
     "lib/core/services/wake_word_engine.dart",
+    "lib/core/services/language_policy.dart",
+    "lib/features/settings/gemini_setup_screen.dart",
+    "assets/docs/gemini_install_bn.md",
     "lib/core/services/backend_client.dart",
     "lib/core/agent/tool_dispatcher.dart",
     "lib/state/app_state.dart",
     "android/app/src/main/AndroidManifest.xml",
     "android/app/src/main/kotlin/com/zaraai/app/MainActivity.kt",
-    "server/main.py", "test/widget_test.dart", ".github/workflows/ci.yml",
+    "server/main.py", "test/widget_test.dart",
+    "test/language_policy_test.dart", "test/gemini_setup_test.dart",
+    ".github/workflows/ci.yml",
 ]
 
 
@@ -79,6 +84,16 @@ def main() -> int:
         errors.append("Flutter v2 embedding marker missing in manifest")
     if "name: zara" not in pubspec:
         errors.append("pubspec name mismatch")
+    if "assets/docs/gemini_install_bn.md" not in pubspec:
+        errors.append("Gemini install doc asset not registered in pubspec")
+
+    policy = (ROOT / "lib/core/services/language_policy.dart").read_text(
+        encoding="utf-8")
+    if "bn_IN" not in policy or "bn-IN" not in policy:
+        errors.append("Bengali-only ASR/TTS locale missing from LanguagePolicy")
+    if "en_US" in (ROOT / "lib/features/settings/settings_screen.dart").read_text(
+            encoding="utf-8"):
+        errors.append("English ASR locale still offered in Settings")
 
     notes.append(f"{len(dart_files)} Dart files")
     notes.append(f"{len(py_files)} Python files")

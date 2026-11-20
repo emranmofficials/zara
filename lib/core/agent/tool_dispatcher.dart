@@ -33,15 +33,15 @@ class ToolDispatcher {
       return ToolResult(
         tool: call.name,
         message: suggestions.isEmpty
-            ? 'Unknown tool: ${call.name}'
-            : 'Unknown tool: ${call.name}. Shayad: ${suggestions.join(", ")}',
+            ? 'অজানা টুল: ${call.name}'
+            : 'অজানা টুল: ${call.name}। হয়তো: ${suggestions.join(", ")}',
       );
     }
 
     if (tool.requiresConfirm && !confirmed) {
       return ToolResult(
         tool: tool.name,
-        message: 'Confirm karein: ${tool.description}?',
+        message: 'নিশ্চিত করুন: ${tool.description}?',
         needsConfirm: true,
         pendingArgs: call.args,
       );
@@ -52,8 +52,8 @@ class ToolDispatcher {
         final now = DateTime.now();
         return ToolResult(
           tool: call.name,
-          message: 'Abhi ${now.hour.toString().padLeft(2, '0')}:'
-              '${now.minute.toString().padLeft(2, '0')} baja hai.',
+          message: 'এখন ${now.hour.toString().padLeft(2, '0')}:'
+              '${now.minute.toString().padLeft(2, '0')} বাজে।',
         );
 
       case 'find_tool':
@@ -61,26 +61,26 @@ class ToolDispatcher {
         final hits = ToolRegistry.suggest(query);
         return ToolResult(
           tool: call.name,
-          message: hits.isEmpty ? 'Koi tool nahi mila.' : 'Tools: ${hits.join(", ")}',
+          message: hits.isEmpty ? 'কোনো টুল পাওয়া যায়নি।' : 'টুল: ${hits.join(", ")}',
         );
 
       case 'remember_fact':
         final fact = call.args['fact']?.toString();
         if (fact == null || fact.isEmpty) {
-          return ToolResult(tool: call.name, message: 'Kya yaad rakhoon?');
+          return ToolResult(tool: call.name, message: 'কী মনে রাখব?');
         }
-        return ToolResult(tool: call.name, message: 'Yaad rakh lunga: $fact');
+        return ToolResult(tool: call.name, message: 'মনে রাখব: $fact');
 
       case 'recall_memory':
-        return ToolResult(tool: call.name, message: 'Memory store abhi stub hai.');
+        return ToolResult(tool: call.name, message: 'মেমরি স্টোর এখনো স্টাব।');
 
       case 'play_music':
-        final song = call.args['query']?.toString() ?? 'music';
-        return ToolResult(tool: call.name, message: 'Baja raha hoon: $song');
+        final song = call.args['query']?.toString() ?? 'সঙ্গীত';
+        return ToolResult(tool: call.name, message: 'বাজাচ্ছি: $song');
 
       case 'set_alarm':
         final time = call.args['time']?.toString() ?? '?';
-        return ToolResult(tool: call.name, message: 'Alarm set for $time.');
+        return ToolResult(tool: call.name, message: '$time-এ অ্যালার্ম সেট করা হয়েছে।');
 
       case 'chat_text':
       case 'reply_to_chat':
@@ -98,7 +98,7 @@ class ToolDispatcher {
       default:
         return ToolResult(
           tool: call.name,
-          message: 'Tool ${call.name} abhi available nahi hai.',
+          message: 'টুল ${call.name} এখনো পাওয়া যাচ্ছে না।',
         );
     }
   }

@@ -6,6 +6,11 @@ abstract final class KeyStoreKeys {
   static const openrouter = 'openrouter_key';
   static const backendUrl = 'backend_url';
   static const backendToken = 'backend_token';
+
+  /// Gemini setup order: the install doc must be seen before the engine can
+  /// be installed. Persisted so the order survives an app restart.
+  static const geminiDocSeen = 'gemini_install_doc_seen';
+  static const geminiEngineInstalled = 'gemini_engine_installed';
 }
 
 class KeyStore {

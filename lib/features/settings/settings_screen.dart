@@ -4,8 +4,10 @@ import 'package:provider/provider.dart';
 
 import '../../core/agent/tool_registry.dart';
 import '../../core/keys/key_store.dart';
+import '../../core/navigation/routes.dart';
 import '../../core/notifications/reply_sender.dart';
 import '../../core/services/backend_client.dart';
+import '../../core/services/language_policy.dart';
 import '../../core/theme/persona.dart';
 import '../../state/app_state.dart';
 
@@ -35,24 +37,34 @@ class SettingsScreen extends StatelessWidget {
 
         Text('Voice', style: Theme.of(context).textTheme.titleLarge),
         const SizedBox(height: 8),
+        const Text('Spoken language: বাংলা (শুধু বাংলা — আপাতত)'),
+        const SizedBox(height: 8),
         Row(
           children: [
             const Icon(Icons.record_voice_over),
             const SizedBox(width: 8),
             Expanded(
               child: DropdownButtonFormField<String>(
-                initialValue: config.localeId,
+                initialValue: LanguagePolicy.locales
+                        .any((entry) => entry.$1 == config.localeId)
+                    ? config.localeId
+                    : LanguagePolicy.localeId,
                 decoration: const InputDecoration(labelText: 'Recognition locale'),
-                items: const [
-                  DropdownMenuItem(value: 'en_US', child: Text('English (US)')),
-                  DropdownMenuItem(value: 'hi_IN', child: Text('Hindi')),
-                  DropdownMenuItem(value: 'bn_IN', child: Text('Bengali')),
-                  DropdownMenuItem(value: 'ne_NP', child: Text('Nepali')),
-                ],
+                items: LanguagePolicy.locales
+                    .map((entry) => DropdownMenuItem(
+                          value: entry.$1,
+                          child: Text(entry.$2),
+                        ))
+                    .toList(),
                 onChanged: (v) {
                   if (v == null) return;
+                  // Only the ASR dialect changes; TTS always stays Bengali.
                   state.voice.updateConfig(
-                    config.copyWith(localeId: v, ttsLanguage: v.replaceFirst('_', '-')),
+                    config.copyWith(
+                      localeId: v,
+                      ttsLanguage: LanguagePolicy.ttsLanguage,
+                      wakeWords: LanguagePolicy.wakeWords,
+                    ),
                   );
                 },
               ),
@@ -87,7 +99,19 @@ class SettingsScreen extends StatelessWidget {
         ),
         const Divider(height: 32),
 
-        Text('API key (Gemini)', style: Theme.of(context).textTheme.titleLarge),
+        Text('Gemini setup', style: Theme.of(context).textTheme.titleLarge),
+        const SizedBox(height: 8),
+        Card(
+          child: ListTile(
+            leading: const Icon(Icons.description_outlined),
+            title: const Text('Install doc → engine'),
+            subtitle: const Text('প্রথমে doc ফাইল, তারপর Gemini engine install'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => state.navigate(Routes.settingsGeminiSetup),
+          ),
+        ),
+        const SizedBox(height: 10),
+        Text('API key (Gemini)', style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: 8),
         const Text('Your key is stored encrypted on this device only.'),
         const SizedBox(height: 10),
@@ -161,11 +185,11 @@ class _BackupFieldState extends State<_BackupField> {
               onPressed: () async {
                 final data = await BackendClient.instance.exportBackup();
                 if (data == null) {
-                  setState(() => _message = 'Export fail — backend configured hai?');
+                  setState(() => _message = 'Export ব্যর্থ — backend সেট করা আছে কি?');
                   return;
                 }
                 _controller.text = data;
-                setState(() => _message = 'Backup taiyar — neeche text se copy karein.');
+                setState(() => _message = 'Backup প্রস্তুত — নিচের টেক্সট কপি করুন।');
               },
               icon: const Icon(Icons.download_outlined),
               label: const Text('Export'),
@@ -174,7 +198,7 @@ class _BackupFieldState extends State<_BackupField> {
             FilledButton.icon(
               onPressed: () async {
                 final ok = await BackendClient.instance.importBackup(_controller.text);
-                setState(() => _message = ok ? 'Import ho gaya.' : 'Import fail — JSON check karein.');
+                setState(() => _message = ok ? 'Import হয়েছে।' : 'Import ব্যর্থ — JSON দেখুন।');
               },
               icon: const Icon(Icons.upload_outlined),
               label: const Text('Import'),
@@ -223,7 +247,7 @@ class _DevicesFieldState extends State<_DevicesField> {
     if (!mounted) return;
     setState(() {
       if (devices != null) _devices = devices;
-      if (devices == null) _message = 'Backend configured nahi hai.';
+      if (devices == null) _message = 'Backend সেট করা নেই।';
     });
   }
 
@@ -252,11 +276,11 @@ class _DevicesFieldState extends State<_DevicesField> {
               onPressed: () async {
                 final token = await BackendClient.instance.registerDevice(_name.text.trim());
                 if (token == null) {
-                  setState(() => _message = 'Register fail.');
+                  setState(() => _message = 'রেজিস্টার ব্যর্থ।');
                   return;
                 }
                 await KeyStore.instance.save(KeyStoreKeys.backendToken, token);
-                setState(() => _message = 'Device token save ho gaya.');
+                setState(() => _message = 'ডিভাইস টোকেন সংরক্ষিত।');
                 _refresh();
               },
               icon: const Icon(Icons.devices_other),
@@ -266,7 +290,7 @@ class _DevicesFieldState extends State<_DevicesField> {
             OutlinedButton.icon(
               onPressed: () async {
                 final ok = await BackendClient.instance.revokeDevice(_name.text.trim());
-                setState(() => _message = ok ? 'Device revoked.' : 'Revoke fail.');
+                setState(() => _message = ok ? 'ডিভাইস বাতিল।' : 'বাতিল ব্যর্থ।');
                 _refresh();
               },
               icon: const Icon(Icons.block),
@@ -353,7 +377,7 @@ class _BackendFieldState extends State<_BackendField> {
           onPressed: () async {
             await KeyStore.instance.save(KeyStoreKeys.backendUrl, _url.text);
             await KeyStore.instance.save(KeyStoreKeys.backendToken, _token.text);
-            setState(() => _message = 'Saved. Leave URL empty for direct key mode.');
+            setState(() => _message = 'সংরক্ষিত। সরাসরি key মোডে URL খালি রাখুন।');
           },
           child: const Text('Save backend settings'),
         ),
@@ -414,7 +438,7 @@ class _KeyFieldState extends State<_KeyField> {
         FilledButton(
           onPressed: () async {
             await KeyStore.instance.save(KeyStoreKeys.gemini, _controller.text);
-            setState(() => _message = 'Saved locally.');
+            setState(() => _message = 'এই ডিভাইসে সংরক্ষিত।');
           },
           child: const Text('Save key'),
         ),

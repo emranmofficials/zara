@@ -10,7 +10,7 @@
     "settings_typing", "settings_guardian", "settings_faces", "settings_faces_capture",
     "settings_face_lock", "settings_face_attempts", "settings_sos", "settings_touch_guard",
     "settings_awareness", "settings_screen_lock", "settings_lock_credentials",
-    "settings_autoreply", "settings_accessibility", "key_setup", "advanced", "event_triggers",
+    "settings_autoreply", "settings_accessibility", "key_setup", "settings_gemini_setup", "advanced", "event_triggers",
     "about", "privacy", "license", "notices", "permissions", "selfie_coach", "photos_of"
   ],
   "phrases": {
@@ -46,6 +46,11 @@
     "settings_face_lock": ["face lock", "face unlock"],
     "settings_accessibility": ["accessibility", "a11y"],
     "key_setup": ["key setup", "api key", "license key"],
+    "settings_gemini_setup": [
+      "gemini install doc", "gemini doc", "install doc", "doc file",
+      "gemini engine", "engine install", "install gemini",
+      "জেমেনি ইন্সটল", "জেমেনি ডক", "ইঞ্জিন ইনস্টল", "ডক ফাইল"
+    ],
     "advanced": ["advanced", "developer", "dev"],
     "event_triggers": ["event triggers", "triggers", "automation"],
     "about": ["about", "about zara", "info"],

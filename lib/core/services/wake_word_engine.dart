@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:typed_data';
 
+import 'language_policy.dart';
+
 /// A pluggable wake-word detector.
 ///
 /// ZaRa ships a clean-room keyword spotter that watches speech-recognition
@@ -21,7 +23,7 @@ abstract class WakeWordEngine {
 /// hits for [cooldown] so one utterance produces a single detection.
 class KeywordWakeWordEngine implements WakeWordEngine {
   KeywordWakeWordEngine({
-    Iterable<String> words = const ['hey zara', 'za ra', 'zara', 'ও জারা'],
+    Iterable<String> words = LanguagePolicy.wakeWords,
     this.cooldown = const Duration(seconds: 2),
   }) : _words = words.map(_normalise).toList();
 

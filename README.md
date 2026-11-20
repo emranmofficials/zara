@@ -55,8 +55,12 @@ for x86_64 still work. The same commands run natively on a normal Flutter host.
   QR scan, a drawable whiteboard, a settings-detail family with working
   switches, a permissions manager and static info pages
 - **Personas** — 4 original personas with generated Material 3 themes
-- **Voice** — `speech_to_text` ASR + `flutter_tts` TTS + pluggable `WakeWordEngine`
-  (keyword spotter on partial transcripts, or inject your own `.tflite` engine)
+- **Voice (Bengali-only for now)** — `speech_to_text` ASR (`bn_IN` / `bn_BD`)
+  + `flutter_tts` TTS (`bn-IN`) + pluggable `WakeWordEngine` (Bengali wake words,
+  keyword spotter on partial transcripts, or inject your own `.tflite` engine).
+  `lib/core/services/language_policy.dart` is the single source of truth for
+  ASR locale, TTS locale, wake words and every model prompt, so no
+  English/Hinglish answer can leak into the spoken pipeline.
 - **Agent** — tool registry (tier budget, fuzzy `find_tool`), Gemini function
   calling and a confirm gate for external actions
 - **Notifications** — `NotificationListenerService` reads reply actions only
@@ -68,8 +72,13 @@ for x86_64 still work. The same commands run natively on a normal Flutter host.
 
 ## Settings
 
+- **Gemini setup** — install doc first, then engine install. The bundled Bengali
+  doc (`assets/docs/gemini_install_bn.md`) must be opened and acknowledged before
+  the “ইঞ্জিন ইনস্টল করুন” button becomes enabled. Both flags persist in secure
+  storage, so restarting the app cannot skip the order. Voice phrase:
+  “জেমেনি ইন্সটল” / “gemini install doc”.
 - Gemini API key (encrypted, on-device) **or** backend URL + Bearer token
-- Persona, recognition locale, speech rate, wake words, test voice
+- Persona, Bengali-only recognition locale, speech rate, Bengali wake words, test voice
 - Notification access, tool budget info
 - Chat summary, backup export/import, device register/revoke
 

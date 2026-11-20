@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import '../agent/tool_registry.dart';
 import '../keys/key_store.dart';
 import '../models/models.dart';
+import 'language_policy.dart';
 
 /// Gemini client with two modes:
 /// 1. Backend proxy (if a backend URL is configured in Settings)
@@ -38,15 +39,14 @@ class GeminiClient {
       // Backend mode: ask for JSON with an optional "tool" object.
       final answer = await _viaBackend(
         backend.trim(),
-        '$prompt\n\nAgar koi tool chahiye to JSON do: {"tool":"name","args":{...}} '
-        'warna seedha jawab do.',
+        '$prompt\n\n${LanguagePolicy.toolPrompt}',
         persona,
       );
       return _parseBackendTool(answer);
     }
 
     if (key == null || key.trim().isEmpty) {
-      return BrainResponse.text('Gemini key nahi hai — Settings me key ya backend URL daalo.');
+      return BrainResponse.text('Gemini key নেই — Settings-এ key বা backend URL দিন।');
     }
 
     final declarations = ToolRegistry.budget(toolBudget)
@@ -80,8 +80,7 @@ class GeminiClient {
         body: jsonEncode({
           'contents': [
             {'role': 'user', 'parts': [
-              {'text': 'You are $persona, a concise voice assistant. '
-                  'Reply in the user\'s language. Use tools when needed.\n\n$prompt'}
+              {'text': '${LanguagePolicy.forPersona(persona)}\n\n$prompt'}
             ]}
           ],
           'tools': declarations,
@@ -90,12 +89,12 @@ class GeminiClient {
       ).timeout(const Duration(seconds: 25));
 
       if (response.statusCode != 200) {
-        return BrainResponse.text('Gemini error ${response.statusCode}: ${_short(response.body)}');
+        return BrainResponse.text('Gemini ত্রুটি ${response.statusCode}।');
       }
       final data = jsonDecode(response.body) as Map<String, dynamic>;
       final parts = data['candidates']?[0]?['content']?['parts'] as List?;
       if (parts == null || parts.isEmpty) {
-        return BrainResponse.text('Kuch jawab nahi mila.');
+        return BrainResponse.text('কোনো উত্তর পাওয়া যায়নি।');
       }
       for (final part in parts) {
         final call = part['functionCall'];
@@ -104,21 +103,23 @@ class GeminiClient {
         }
       }
       final text = parts.firstWhere((p) => p['text'] != null, orElse: () => {})['text'];
-      return BrainResponse.text(text?.toString() ?? 'Kuch nahi mila.');
+      return BrainResponse.text(text?.toString() ?? 'কিছু পাওয়া যায়নি।');
     } catch (e) {
-      return BrainResponse.text('Connection issue: $e');
+      return BrainResponse.text('সংযোগে সমস্যা: $e');
     }
   }
 
-  /// Translate a short reply into the target chat language.
+  /// Polish a short reply as a sendable Bengali message.
+  ///
+  /// [targetLanguage] is kept for API compatibility with the voice-note offer
+  /// model; the app is Bengali-only, so LanguagePolicy wins regardless.
   Future<String> translateReply({
     required String text,
     required String targetLanguage,
     required String chat,
   }) async {
     return respond(
-      'Translate this reply into $targetLanguage for a WhatsApp chat with $chat. '
-      'Return ONLY the translated text, no explanation, no quotes.\n\n$text',
+      '${LanguagePolicy.translatePrompt(chat: chat, detectedLanguage: targetLanguage)}\n\n$text',
     );
   }
 
@@ -155,19 +156,19 @@ class GeminiClient {
         body: jsonEncode({'message': prompt, 'persona': persona}),
       ).timeout(const Duration(seconds: 30));
       if (response.statusCode != 200) {
-        return 'Backend error ${response.statusCode}: ${_short(response.body)}';
+        return 'Backend ত্রুটি ${response.statusCode}।';
       }
       final data = jsonDecode(response.body) as Map<String, dynamic>;
-      return data['reply']?.toString() ?? 'Kuch jawab nahi mila.';
+      return data['reply']?.toString() ?? 'কোনো উত্তর পাওয়া যায়নি।';
     } catch (e) {
-      return 'Backend connection issue: $e';
+      return 'Backend সংযোগে সমস্যা: $e';
     }
   }
 
   Future<String> _direct(String prompt) async {
     final key = await KeyStore.instance.read(KeyStoreKeys.gemini);
     if (key == null || key.trim().isEmpty) {
-      return 'Gemini key nahi hai — Settings me key ya backend URL daalo.';
+      return 'Gemini key নেই — Settings-এ key বা backend URL দিন।';
     }
     final uri = Uri.https('generativelanguage.googleapis.com',
         '/v1beta/models/$_model:generateContent', {'key': key.trim()});
@@ -185,16 +186,14 @@ class GeminiClient {
         }),
       ).timeout(const Duration(seconds: 25));
       if (response.statusCode != 200) {
-        return 'Gemini error ${response.statusCode}: ${_short(response.body)}';
+        return 'Gemini ত্রুটি ${response.statusCode}।';
       }
       final data = jsonDecode(response.body) as Map<String, dynamic>;
       final candidates = data['candidates'] as List?;
-      if (candidates == null || candidates.isEmpty) return 'Kuch jawab nahi mila.';
-      return candidates[0]['content']['parts'][0]['text']?.toString() ?? 'Kuch nahi mila.';
+      if (candidates == null || candidates.isEmpty) return 'কোনো উত্তর পাওয়া যায়নি।';
+      return candidates[0]['content']['parts'][0]['text']?.toString() ?? 'কিছু পাওয়া যায়নি।';
     } catch (e) {
-      return 'Connection issue: $e';
+      return 'সংযোগে সমস্যা: $e';
     }
   }
-
-  String _short(String s) => s.length > 120 ? '${s.substring(0, 120)}…' : s;
 }

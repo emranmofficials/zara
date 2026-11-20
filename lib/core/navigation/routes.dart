@@ -5,6 +5,7 @@ import '../../features/devices/device_hub_screen.dart';
 import '../../features/home/home_screen.dart';
 import '../../features/rules/rules_screen.dart';
 import '../../features/scanner/scanner_screen.dart';
+import '../../features/settings/gemini_setup_screen.dart';
 import '../../features/settings/setting_detail_screen.dart';
 import '../../features/settings/settings_screen.dart';
 import '../../features/system/info_screen.dart';
@@ -67,6 +68,7 @@ abstract final class Routes {
   static const settingsAutoreply = GeneratedRoutes.SETTINGS_AUTOREPLY;
   static const settingsAccessibility = GeneratedRoutes.SETTINGS_ACCESSIBILITY;
   static const keySetup = GeneratedRoutes.KEY_SETUP;
+  static const settingsGeminiSetup = GeneratedRoutes.SETTINGS_GEMINI_SETUP;
   static const advanced = GeneratedRoutes.ADVANCED;
   static const eventTriggers = GeneratedRoutes.EVENT_TRIGGERS;
 
@@ -89,7 +91,8 @@ abstract final class Routes {
     settingsTyping, settingsGuardian, settingsFaces, settingsFacesCapture,
     settingsFaceLock, settingsFaceAttempts, settingsSos, settingsTouchGuard,
     settingsAwareness, settingsScreenLock, settingsLockCredentials,
-    settingsAutoreply, settingsAccessibility, keySetup, advanced, eventTriggers,
+    settingsAutoreply, settingsAccessibility, keySetup, settingsGeminiSetup,
+    advanced, eventTriggers,
     about, privacy, license, notices, permissions, selfieCoach, photosOf,
   ];
 }
@@ -162,6 +165,7 @@ abstract final class RoutePage {
         Routes.settings => const SettingsScreen(),
         Routes.keySetup || Routes.settingsBackup || Routes.settingsVoiceEngine =>
           const SettingsScreen(),
+        Routes.settingsGeminiSetup => const GeminiSetupScreen(),
         Routes.permissions => const PermissionsScreen(),
         Routes.zaraHome => const DeviceHubScreen(),
         Routes.pcHub => const DeviceHubScreen(pc: true),

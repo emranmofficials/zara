@@ -48,6 +48,7 @@ abstract final class GeneratedRoutes {
   static const SETTINGS_AUTOREPLY = 'settings_autoreply';
   static const SETTINGS_ACCESSIBILITY = 'settings_accessibility';
   static const KEY_SETUP = 'key_setup';
+  static const SETTINGS_GEMINI_SETUP = 'settings_gemini_setup';
   static const ADVANCED = 'advanced';
   static const EVENT_TRIGGERS = 'event_triggers';
   static const ABOUT = 'about';
@@ -92,6 +93,7 @@ const generatedPhrases = <String, List<String>>{
   'settings_face_lock': ['face lock', 'face unlock'],
   'settings_accessibility': ['accessibility', 'a11y'],
   'key_setup': ['key setup', 'api key', 'license key'],
+  'settings_gemini_setup': ['gemini install doc', 'gemini doc', 'install doc', 'doc file', 'gemini engine', 'engine install', 'install gemini', 'জেমেনি ইন্সটল', 'জেমেনি ডক', 'ইঞ্জিন ইনস্টল', 'ডক ফাইল'],
   'advanced': ['advanced', 'developer', 'dev'],
   'event_triggers': ['event triggers', 'triggers', 'automation'],
   'about': ['about', 'about zara', 'info'],

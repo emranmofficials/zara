@@ -8,6 +8,7 @@ import '../core/navigation/routes.dart';
 import '../core/notifications/reply_sender.dart';
 import '../core/services/backend_client.dart';
 import '../core/services/gemini_client.dart';
+import '../core/services/language_policy.dart';
 import '../core/services/voice_session.dart';
 import '../core/theme/persona.dart';
 
@@ -101,20 +102,21 @@ class AppState extends ChangeNotifier {
         language: _guessLanguage(first.chat),
         token: first.token,
       );
-      _lastAction = 'Voice note se reply mode: ${first.chat}';
+      _lastAction = 'ভয়েস নোটের উত্তর মোড: ${first.chat}';
       notifyListeners();
     });
   }
 
   String _guessLanguage(String chat) {
-    // Placeholder: in a full build this comes from the detected note language.
-    return 'Hinglish';
+    // ZaRa is Bengali-only for now: offers are always polished into Bengali,
+    // whatever language the incoming voice note used.
+    return LanguagePolicy.name;
   }
 
   Future<bool> initializeVoice() async {
     final ok = await _voice.initialize();
     if (!ok) {
-      _voiceError = 'Mic / speech recognition unavailable. Check Settings.';
+      _voiceError = 'মাইক / স্পিচ রিকগনিশন পাওয়া যায়নি। Settings দেখুন।';
       notifyListeners();
     }
     return ok;
@@ -179,7 +181,7 @@ class AppState extends ChangeNotifier {
   void startQuickAction(String label) {
     _draft = '$label: ';
     _route = Routes.chat;
-    _lastAction = '$label shuru — likh kar bhejein ya mic dabayein.';
+    _lastAction = '$label শুরু — লিখে পাঠান বা মাইক টিপুন।';
     notifyListeners();
   }
 
@@ -198,8 +200,15 @@ class AppState extends ChangeNotifier {
 
   void stopSpeaking() => _voice.stopSpeaking();
 
+  /// Speak a Bengali status line. No-op in widget tests so no plugin channel
+  /// is touched when [enableVoice] is false.
+  Future<void> speakBengali(String text) async {
+    if (!enableVoice || text.trim().isEmpty) return;
+    await _voice.speak(text, persona: _persona);
+  }
+
   Future<void> testVoice() =>
-      _voice.speak('Namaste, main ZaRa hoon. Bataiye, kya karun?', persona: _persona);
+      _voice.speak('নমস্কার, আমি ZaRa। বলুন, কী করতে পারি?', persona: _persona);
 
   Future<void> send() async {
     final text = _draft.trim();
@@ -223,7 +232,7 @@ class AppState extends ChangeNotifier {
       return;
     }
 
-    final reply = brain.text ?? 'Kuch nahi mila.';
+    final reply = brain.text ?? 'কোনো উত্তর পাওয়া যায়নি।';
     _messages.add(ChatMessage.assistant(reply));
     _syncHistory();
     _voiceStatus = VoiceStatus.speaking;
@@ -248,7 +257,7 @@ class AppState extends ChangeNotifier {
       token: offer.token,
     );
     _voiceStatus = VoiceStatus.idle;
-    _lastAction = 'Reply tayyar — confirm karein.';
+    _lastAction = 'উত্তর প্রস্তুত — নিশ্চিত করুন।';
     notifyListeners();
   }
 
@@ -257,16 +266,16 @@ class AppState extends ChangeNotifier {
       final p = _pending!;
       _pending = null;
       if (!yes) {
-        _lastAction = 'Reply cancel ho gaya.';
-        await _voice.speak('Theek hai, nahi bheja.', persona: _persona);
+        _lastAction = 'উত্তর বাতিল হয়েছে।';
+        await _voice.speak('ঠিক আছে, পাঠানো হয়নি।', persona: _persona);
         _offer = null;
         notifyListeners();
         return;
       }
       final ok = await ReplySender.send(p.token, p.reply);
       _lastAction = ok
-          ? 'Bhej diya — ${p.chat} me ${p.language} me.'
-          : 'Notification expire ho gaya, reply nahi gaya.';
+          ? 'পাঠানো হয়েছে — ${p.chat}-এ বাংলা উত্তর।'
+          : 'নোটিফিকেশনের সময় শেষ, উত্তর যায়নি।';
       _messages.add(ChatMessage.assistant(_lastAction));
       _syncHistory();
       _offer = null;
@@ -304,7 +313,7 @@ class AppState extends ChangeNotifier {
         ? facts
         : facts.where((f) => f.toLowerCase().contains(query.toLowerCase())).toList();
     if (matches.isEmpty) return null;
-    return 'Yaad hai: ${matches.take(5).join(" | ")}';
+    return 'মনে আছে: ${matches.take(5).join(" | ")}';
   }
 
   Future<void> _runTool(ToolCall call) async {
@@ -341,11 +350,11 @@ class AppState extends ChangeNotifier {
   /// Ask the backend to summarise the synced chat history.
   Future<void> summarizeChat() async {
     _voiceStatus = VoiceStatus.thinking;
-    _lastAction = 'Chat summary ban raha hoon…';
+    _lastAction = 'চ্যাটের সারাংশ তৈরি করছি…';
     notifyListeners();
     final summary = await BackendClient.instance.fetchSummary();
     if (summary == null) {
-      _lastAction = 'Summary nahi mila — backend configured hai?';
+      _lastAction = 'সারাংশ পাওয়া যায়নি — backend সেট করা আছে কি?';
       _voiceStatus = VoiceStatus.idle;
       notifyListeners();
       return;

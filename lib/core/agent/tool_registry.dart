@@ -16,18 +16,18 @@ class ToolSpec {
 
 /// A small, original tool catalogue (scaffolding for the dispatcher).
 const kTools = <ToolSpec>[
-  ToolSpec(name: 'get_time', description: 'current time', licensed: false, tier: 0),
-  ToolSpec(name: 'search_web', description: 'search the web', licensed: false, tier: 0),
-  ToolSpec(name: 'find_tool', description: 'suggest a tool by name', licensed: false, tier: 0),
-  ToolSpec(name: 'remember_fact', description: 'store a memory', tier: 0),
-  ToolSpec(name: 'recall_memory', description: 'recall a memory', tier: 0),
-  ToolSpec(name: 'chat_text', description: 'send a chat message', tier: 1),
-  ToolSpec(name: 'reply_to_chat', description: 'reply to last chat', requiresConfirm: true, tier: 1),
-  ToolSpec(name: 'send_sms', description: 'send an SMS', requiresConfirm: true, tier: 1),
-  ToolSpec(name: 'make_call', description: 'place a call', requiresConfirm: true, tier: 1),
-  ToolSpec(name: 'send_email', description: 'send an email', requiresConfirm: true, tier: 2),
-  ToolSpec(name: 'set_alarm', description: 'set an alarm', tier: 1),
-  ToolSpec(name: 'play_music', description: 'play music', tier: 1),
+  ToolSpec(name: 'get_time', description: 'বর্তমান সময়', licensed: false, tier: 0),
+  ToolSpec(name: 'search_web', description: 'ওয়েবে খোঁজা', licensed: false, tier: 0),
+  ToolSpec(name: 'find_tool', description: 'নাম দিয়ে টুল খোঁজা', licensed: false, tier: 0),
+  ToolSpec(name: 'remember_fact', description: 'মনে রাখা', tier: 0),
+  ToolSpec(name: 'recall_memory', description: 'মনে করা', tier: 0),
+  ToolSpec(name: 'chat_text', description: 'চ্যাট বার্তা পাঠানো', tier: 1),
+  ToolSpec(name: 'reply_to_chat', description: 'সর্বশেষ চ্যাটে উত্তর দেওয়া', requiresConfirm: true, tier: 1),
+  ToolSpec(name: 'send_sms', description: 'এসএমএস পাঠানো', requiresConfirm: true, tier: 1),
+  ToolSpec(name: 'make_call', description: 'কল করা', requiresConfirm: true, tier: 1),
+  ToolSpec(name: 'send_email', description: 'ইমেইল পাঠানো', requiresConfirm: true, tier: 2),
+  ToolSpec(name: 'set_alarm', description: 'অ্যালার্ম সেট করা', tier: 1),
+  ToolSpec(name: 'play_music', description: 'সঙ্গীত বাজানো', tier: 1),
 ];
 
 abstract final class ToolRegistry {

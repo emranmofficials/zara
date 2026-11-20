@@ -286,7 +286,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
             )),
         if (docs.isEmpty) const Padding(
           padding: EdgeInsets.all(20),
-          child: Center(child: Text('Koi file nahi mili.')),
+          child: Center(child: Text('কোনো ফাইল পাওয়া যায়নি।')),
         ),
       ],
     );

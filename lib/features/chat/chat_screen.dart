@@ -51,7 +51,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 style: Theme.of(context).textTheme.titleLarge),
             Expanded(
               child: state.messages.isEmpty
-                  ? const Center(child: Text('Abhi kuch nahi.'))
+                  ? const Center(child: Text('এখনো কিছু নেই।'))
                   : ListView.builder(
                       itemCount: state.messages.length,
                       itemBuilder: (_, i) {
@@ -234,7 +234,7 @@ class _ChatScreenState extends State<ChatScreen> {
       context: context,
       builder: (_) => AlertDialog(
         title: const Text('Clear all chat history?'),
-        content: const Text('Saved yaadein waise hi rahengi.'),
+        content: const Text('সংরক্ষিত স্মৃতি থাকবে।'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
           FilledButton(

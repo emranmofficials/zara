@@ -8,6 +8,7 @@ import 'package:speech_to_text/speech_recognition_result.dart' as stt;
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 
 import '../theme/persona.dart';
+import 'language_policy.dart';
 import 'wake_word_engine.dart';
 
 /// Internal engine stages. AppState maps these to its public VoiceStatus.
@@ -22,9 +23,9 @@ class VoiceConfig {
   final double ttsPitch;
 
   const VoiceConfig({
-    this.localeId = 'en_US',
-    this.ttsLanguage = 'en-US',
-    this.wakeWords = const ['hey zara', 'za ra', 'zara', 'ও জারা'],
+    this.localeId = LanguagePolicy.localeId,
+    this.ttsLanguage = LanguagePolicy.ttsLanguage,
+    this.wakeWords = LanguagePolicy.wakeWords,
     this.ttsRate = 0.48,
     this.ttsPitch = 1.0,
   });
@@ -149,6 +150,9 @@ class VoiceSession {
 
   Future<void> speak(String text, {Persona? persona}) async {
     if (text.trim().isEmpty) return;
+    // Re-apply the Bengali voice on every utterance so a persona/preset change
+    // can never leave TTS on a non-Bengali voice.
+    await _tts.setLanguage(LanguagePolicy.ttsLanguage);
     if (persona != null) {
       final rate = _config.ttsRate + (persona == Persona.nova ? 0.08 : 0.0);
       final pitch = _config.ttsPitch + (persona.dark ? -0.1 : 0.1);

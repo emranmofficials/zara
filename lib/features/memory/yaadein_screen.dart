@@ -102,7 +102,7 @@ class _YaadeinScreenState extends State<YaadeinScreen> {
                   children: [
                     Icon(Icons.history_toggle_off, size: 36, color: accent),
                     const SizedBox(height: 8),
-                    const Text('Koi yaad nahi mili. Chat karo, phir yahan dikhega.'),
+                    const Text('কোনো স্মৃতি পাওয়া যায়নি। চ্যাট করুন, তারপর এখানে দেখা যাবে।'),
                   ],
                 ),
               ),

@@ -22,6 +22,16 @@ void main() {
       expect(RouteRegistry.resolveFromPhrase('unknown'), isNull);
     });
 
+    test('Gemini install doc resolves before the engine install flow', () {
+      expect(RouteRegistry.has(Routes.settingsGeminiSetup), isTrue);
+      expect(RouteRegistry.resolveFromPhrase('gemini install doc'),
+          Routes.settingsGeminiSetup);
+      expect(RouteRegistry.resolveFromPhrase('জেমেনি ইন্সটল'),
+          Routes.settingsGeminiSetup);
+      expect(RouteRegistry.resolveFromPhrase('engine install'),
+          Routes.settingsGeminiSetup);
+    });
+
     test('every route maps to a real UI (feature screen or info screen)', () {
       for (final route in Routes.all) {
         final widget = RoutePage.forRoute(route);
