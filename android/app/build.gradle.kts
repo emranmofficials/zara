@@ -47,12 +47,15 @@ android {
         debug {
             // Uses the default debug key. Cleartext HTTP is enabled by the
             // debug network_security_config.xml.
+            isMinifyEnabled = false
+            isShrinkResources = false
         }
         release {
             if (hasReleaseKeystore) {
                 signingConfig = signingConfigs.getByName("release")
             }
             isMinifyEnabled = false
+            isShrinkResources = false
         }
     }
 }
