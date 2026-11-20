@@ -99,6 +99,8 @@ class _AppShellState extends State<AppShell> {
         destinations: const [
           NavigationDestination(icon: Icon(Icons.home_outlined), label: 'Home'),
           NavigationDestination(icon: Icon(Icons.chat_bubble_outline), label: 'Chat'),
+          NavigationDestination(icon: Icon(Icons.photo_album_outlined), label: 'Yaadein'),
+          NavigationDestination(icon: Icon(Icons.document_scanner_outlined), label: 'Scanner'),
           NavigationDestination(icon: Icon(Icons.settings_outlined), label: 'Settings'),
         ],
       ),

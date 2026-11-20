@@ -42,6 +42,12 @@ class AppState extends ChangeNotifier {
   String _voiceError = '';
   String _lastAction = '';
 
+  // Home / Vibes live state (mirrors the foreground-service state flow).
+  String _mood = 'happy';
+  int _energy = 72;
+  String? _attachment;
+  bool _oldChat = false;
+
   Persona get persona => _persona;
   String get route => _route;
   VoiceStatus get voiceStatus => _voiceStatus;
@@ -53,6 +59,10 @@ class AppState extends ChangeNotifier {
   String get partial => _partial;
   String get voiceError => _voiceError;
   String get lastAction => _lastAction;
+  String get mood => _mood;
+  int get energy => _energy;
+  String? get attachment => _attachment;
+  bool get oldChat => _oldChat;
   VoiceSession get voice => _voice;
 
   void _initVoice() {
@@ -122,6 +132,45 @@ class AppState extends ChangeNotifier {
 
   void setDraft(String value) {
     _draft = value;
+    notifyListeners();
+  }
+
+  /// Used by secondary screens and quick actions to surface a local status.
+  void setAction(String action) {
+    _lastAction = action;
+    notifyListeners();
+  }
+
+  void setMood(String value) {
+    _mood = value;
+    notifyListeners();
+  }
+
+  void setEnergy(int value) {
+    _energy = value.clamp(0, 100);
+    notifyListeners();
+  }
+
+  void attach(String name) {
+    _attachment = name;
+    notifyListeners();
+  }
+
+  void removeAttachment() {
+    _attachment = null;
+    notifyListeners();
+  }
+
+  void setOldChat(bool value) {
+    _oldChat = value;
+    notifyListeners();
+  }
+
+  /// A quick action from Home pre-fills the composer and opens Chat.
+  void startQuickAction(String label) {
+    _draft = '$label: ';
+    _route = Routes.chat;
+    _lastAction = '$label shuru — likh kar bhejein ya mic dabayein.';
     notifyListeners();
   }
 

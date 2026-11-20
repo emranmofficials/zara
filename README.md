@@ -38,8 +38,18 @@ for x86_64 still work. The same commands run natively on a normal Flutter host.
 
 ## What is inside
 
-- **Shell** — single `AppShell` with drawer, bottom nav and mic FAB
-- **Navigation** — custom StateFlow-like route state (`RouteRegistry` / `RoutePage`)
+- **Shell** — single `AppShell` with a grouped, searchable 57-route drawer,
+  5-destination bottom nav and mic FAB
+- **Navigation** — custom StateFlow-like route state (`RouteRegistry` / `RoutePage`),
+  57 generated routes with Hinglish/Bengali voice aliases (longest alias wins)
+- **Home** — time-based greeting, live voice state, mood cards, energy meter,
+  weather/today cards and 12 quick-action chips
+- **Chat** — live/old-chat header, history & clear, reply chip, attachment chip,
+  message variants (text/voice/tool) and the pending-voice-reply confirm card
+- **Yaadein** — date-grouped memories combined with backend memory facts
+- **Vibes** — mood selection with persona-matched energy
+- **Scanner** — camera permission flow, standby/live/recording state machine,
+  flip/capture controls and "send detected text to chat"
 - **Personas** — 4 original personas with generated Material 3 themes
 - **Voice** — `speech_to_text` ASR + `flutter_tts` TTS + pluggable `WakeWordEngine`
   (keyword spotter on partial transcripts, or inject your own `.tflite` engine)
@@ -69,7 +79,8 @@ lib/core/navigation   StateFlow-like routes
 lib/core/services     Gemini, backend client, voice session, wake word engine
 lib/core/theme        personas + themes
 lib/core/notifications RemoteInput reply bridge
-lib/features          Home, Chat, Settings
+lib/features          Home, Chat, Vibes, Yaadein, Scanner, Settings,
+                      shared secondary-route screen
 lib/state             AppState
 server/               optional Python FastAPI backend
 test/                 widget + unit tests

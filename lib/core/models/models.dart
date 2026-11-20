@@ -1,25 +1,34 @@
 import 'package:uuid/uuid.dart';
 
+enum ChatMessageKind { text, voice, tool }
+
 class ChatMessage {
   final String id;
   final String text;
   final bool isUser;
   final DateTime at;
+  final ChatMessageKind kind;
 
   ChatMessage({
     String? id,
     required this.text,
     required this.isUser,
     DateTime? at,
+    this.kind = ChatMessageKind.text,
   })  : id = id ?? const Uuid().v4(),
         at = at ?? DateTime.now();
 
   ChatMessage.user(String text) : this(text: text, isUser: true);
   ChatMessage.assistant(String text) : this(text: text, isUser: false);
+  ChatMessage.voice(String text)
+      : this(text: text, isUser: true, kind: ChatMessageKind.voice);
+  ChatMessage.tool(String text)
+      : this(text: text, isUser: false, kind: ChatMessageKind.tool);
 
   Map<String, dynamic> toMap() => {
         'text': text,
         'is_user': isUser,
+        'kind': kind.name,
         'at': at.toIso8601String(),
       };
 }
