@@ -6,6 +6,9 @@ analyzer:
     # the former is still fully functional. Keep the codebase buildable on
     # both older and newer SDKs without a wholesale UI rewrite.
     deprecated_member_use: ignore
+  exclude:
+    - build/**
+    - android/**
 
 linter:
   rules:
