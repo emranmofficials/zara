@@ -23,6 +23,11 @@
         android:networkSecurityConfig="@xml/network_security_config"
         android:theme="@style/ZaRaTheme">
 
+        <!-- Flutter v2 embedding marker (required by Flutter build tooling). -->
+        <meta-data
+            android:name="flutterEmbedding"
+            android:value="2"/>
+
         <activity
             android:name=".MainActivity"
             android:exported="true"

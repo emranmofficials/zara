@@ -75,6 +75,8 @@ def main() -> int:
         errors.append("Flutter v2 embedding plugin missing in build.gradle.kts")
     if "networkSecurityConfig" not in manifest:
         errors.append("networkSecurityConfig missing in manifest")
+    if "flutterEmbedding" not in manifest or 'android:value="2"' not in manifest:
+        errors.append("Flutter v2 embedding marker missing in manifest")
     if "name: zara" not in pubspec:
         errors.append("pubspec name mismatch")
 
